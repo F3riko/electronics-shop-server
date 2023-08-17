@@ -7,13 +7,13 @@ class UserNotFoundError extends Error {
 
 const connection = require("../db-init");
 
-async function getUser(username, password) {
+async function getUser(email, password) {
   try {
     const results = await new Promise((resolve, reject) => {
-      const queryText = `SELECT * FROM users WHERE username = ? AND password = ?`;
+      const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
       connection.query(
         queryText,
-        [username, password],
+        [email, password],
         function (err, results, fields) {
           if (err) {
             console.error("Error fetching user:", err);

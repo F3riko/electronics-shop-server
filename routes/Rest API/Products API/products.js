@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 const {
   getAllProducts,
-} = require("../db-interactions/api-products/api-products-interactions");
+} = require("../../../db-interactions/api-products/api-products-interactions");
 
 router.get("/", async function (req, res, next) {
   try {
