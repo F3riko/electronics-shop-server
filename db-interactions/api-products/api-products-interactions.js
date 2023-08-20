@@ -1,3 +1,4 @@
+const getAllChildrenCategories = require("../../utils/categoryHierarchy");
 const connection = require("../db-init");
 
 async function getAllProducts() {
@@ -12,6 +13,34 @@ async function getAllProducts() {
 
         resolve(results);
       });
+    });
+
+    return results;
+  } catch (error) {
+    throw error;
+  }
+}
+async function getProductsByCategory(categoryId) {
+  try {
+    // const allCategories = await getCategoriesList();
+    // const allRequiredCategories = [
+    //   categoryId,
+    //   ...getAllChildrenCategories(allCategories, categoryId),
+    // ];
+
+    const results = await new Promise((resolve, reject) => {
+      connection.query(
+        "SELECT * FROM items WHERE category_id IN (?)",
+        [categoryId],
+        function (err, results, fields) {
+          if (err) {
+            console.error("Error fetching products:", err);
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
     });
 
     return results;
@@ -43,4 +72,4 @@ async function getCategoriesList() {
   }
 }
 
-module.exports = { getAllProducts, getCategoriesList };
+module.exports = { getAllProducts, getCategoriesList, getProductsByCategory };
