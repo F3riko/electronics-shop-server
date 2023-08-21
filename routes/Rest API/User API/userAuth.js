@@ -4,6 +4,8 @@ const getUser = require("../../../db-interactions/api-user/api-login-user");
 
 router.post("/", async function (req, res, next) {
   try {
+    console.log(req.body);
+
     if (!req.body.email || !req.body.password) {
       res.status(400).json({ error: "Missing required data in request body" });
       return;
