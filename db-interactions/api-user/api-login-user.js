@@ -1,12 +1,10 @@
-const crypto = require("crypto");
 const connection = require("../db-init");
-
-class UserNotFoundError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "UserNotFoundError";
-  }
-}
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  saveRefreshToken,
+} = require("../../utils/accessTokenOp");
+const UserNotFoundError = require("../../utils/customErrors");
 
 async function getUser(email, password, res) {
   try {
@@ -31,25 +29,24 @@ async function getUser(email, password, res) {
       );
     });
 
-    // User's data here and object from it
     const userData = results[0];
-    const userObject = {
-      id: userData.id,
-      email: userData.email,
-    };
-    const jsonData = JSON.stringify(userObject);
+    const openData = JSON.stringify(userData.email);
 
-    // Choose a secret key and IV for encryption
-    const secretKey = crypto.randomBytes(32); // 256 bits
-    const iv = crypto.randomBytes(16); // 128 bits
+    const accessToken = generateAccessToken(userData.id);
+    const refreshToken = generateRefreshToken(userData.id);
+    await saveRefreshToken(refreshToken, userData.id);
 
-    // Create a cipher object using the secret key and IV, temp userData file for exercise purposes
-    const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv);
-    let encryptedData = cipher.update(jsonData, "utf8", "hex");
-    encryptedData += cipher.final("hex");
-    res.cookie("userData", encryptedData, { maxAge: 3600000 });
-    res.cookie("iv", iv.toString("hex"), { maxAge: 3600000 });
-    res.cookie("openData", JSON.stringify(userData.email));
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie("openData", openData);
     res.sendStatus(200);
   } catch (error) {
     throw error;
