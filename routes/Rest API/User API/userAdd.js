@@ -14,6 +14,7 @@ router.post("/", (req, res) => {
     (error, results) => {
       console.log(error, results);
       if (results.affectedRows === 1) {
+        // Return user auth - another query
         return res.json({ status: 200 });
       } else {
         return res.json({ error: error });

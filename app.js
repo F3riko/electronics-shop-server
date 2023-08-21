@@ -12,6 +12,9 @@ var userAdd = require("./routes/Rest API/User API/userAdd");
 var categoriesList = require("./routes/Rest API/Products API/categories");
 
 var app = express();
+var cors = require("cors");
+
+app.use(cors());
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

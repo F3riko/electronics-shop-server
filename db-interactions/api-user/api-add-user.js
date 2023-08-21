@@ -7,7 +7,7 @@ class InvalidEmailError extends Error {
   }
 }
 
-function addUser(email, password, captchaToken, callback) {
+function addUser(email, password, recaptchaResponse, callback) {
   try {
     // Wait for captchaToken validation: connect to google server and verify token validity
     // Wait for email validations:
