@@ -1,3 +1,6 @@
+const crypto = require("crypto");
+const connection = require("../db-init");
+
 class UserNotFoundError extends Error {
   constructor(message) {
     super(message);
@@ -5,9 +8,7 @@ class UserNotFoundError extends Error {
   }
 }
 
-const connection = require("../db-init");
-
-async function getUser(email, password) {
+async function getUser(email, password, res) {
   try {
     const results = await new Promise((resolve, reject) => {
       const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
@@ -29,7 +30,27 @@ async function getUser(email, password) {
         }
       );
     });
-    return results;
+
+    // User's data here and object from it
+    const userData = results[0];
+    const userObject = {
+      id: userData.id,
+      email: userData.email,
+    };
+    const jsonData = JSON.stringify(userObject);
+
+    // Choose a secret key and IV for encryption
+    const secretKey = crypto.randomBytes(32); // 256 bits
+    const iv = crypto.randomBytes(16); // 128 bits
+
+    // Create a cipher object using the secret key and IV, temp userData file for exercise purposes
+    const cipher = crypto.createCipheriv("aes-256-cbc", secretKey, iv);
+    let encryptedData = cipher.update(jsonData, "utf8", "hex");
+    encryptedData += cipher.final("hex");
+    res.cookie("userData", encryptedData, { maxAge: 3600000 });
+    res.cookie("iv", iv.toString("hex"), { maxAge: 3600000 });
+    res.cookie("openData", JSON.stringify(userData.email));
+    res.sendStatus(200);
   } catch (error) {
     throw error;
   }

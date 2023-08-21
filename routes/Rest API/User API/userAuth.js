@@ -1,17 +1,14 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
 const getUser = require("../../../db-interactions/api-user/api-login-user");
 
 router.post("/", async function (req, res, next) {
   try {
-    console.log(req.body);
-
     if (!req.body.email || !req.body.password) {
       res.status(400).json({ error: "Missing required data in request body" });
       return;
     }
-    const user = await getUser(req.body.email, req.body.password);
-    res.json(user);
+    await getUser(req.body.email, req.body.password, res);
   } catch (error) {
     if (error.name === "UserNotFoundError") {
       res.status(401).json({ error: "Unauthorized: Invalid credentials" });
