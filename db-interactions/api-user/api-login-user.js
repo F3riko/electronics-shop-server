@@ -15,7 +15,7 @@ async function getUser(email, password, res) {
         [email, password],
         function (err, results, fields) {
           if (err) {
-            console.error("Error fetching user:", err);
+            console.error("Error fetching user getUser func:", err);
             reject(err);
             return;
           }
@@ -38,12 +38,12 @@ async function getUser(email, password, res) {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
+      // secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
+      // secure: true,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie("openData", openData);
