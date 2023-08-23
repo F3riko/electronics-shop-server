@@ -12,6 +12,9 @@ var userAdd = require("./routes/Rest API/User API/userAdd");
 var categoriesList = require("./routes/Rest API/Products API/categories");
 var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
 
+// Testing sessions
+// var counter = require("./routes/testing/counter");
+
 var app = express();
 // Cors handling
 var cors = require("cors");
@@ -34,8 +37,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // routes declaration
-// app.use("/", indexRouter);
-// app.use("/users", usersRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/auth/user", userAuth);
 app.use("/api/add/user", userAdd);
