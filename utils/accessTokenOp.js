@@ -28,8 +28,18 @@ async function saveRefreshToken(refreshToken, userId) {
   );
 }
 
+function verifyToken(token) {
+  try {
+    const decoded = jwt.verify(token, config.secretKey);
+    return decoded;
+  } catch (error) {
+    throw new Error("Token verification failed");
+  }
+}
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
   saveRefreshToken,
+  verifyToken,
 };

@@ -1,10 +1,11 @@
 var express = require("express");
 var router = express.Router();
-const addUser = require("../../../db-interactions/api-user/api-add-user");
+// const addUser = require("../../../db-interactions/api-user/api-add-user");
 const getUser = require("../../../db-interactions/api-user/api-login-user");
 
 const connection = require("../../../db-interactions/db-init");
 
+// Temporary query - problems with async -> switch to mysql12/promise in the future or solve it
 router.post("/", async (req, res) => {
   try {
     const queryText = "INSERT INTO users (email, password) VALUES (?, ?)";

@@ -10,6 +10,7 @@ var productsRouter = require("./routes/Rest API/Products API/products");
 var userAuth = require("./routes/Rest API/User API/userAuth");
 var userAdd = require("./routes/Rest API/User API/userAdd");
 var categoriesList = require("./routes/Rest API/Products API/categories");
+var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
 
 var app = express();
 // Cors handling
@@ -39,6 +40,7 @@ app.use("/api/products", productsRouter);
 app.use("/api/auth/user", userAuth);
 app.use("/api/add/user", userAdd);
 app.use("/api/products/categories", categoriesList);
+app.use("/user/passReset", userPassResetMsg);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
