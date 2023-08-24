@@ -1,8 +1,10 @@
+const dotenv = require("dotenv").config({ path: "./secret.env" });
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var session = require("express-session");
 
 // Cors handling
 var cors = require("cors");
@@ -33,6 +35,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 5 * 60 * 1000 },
+  })
+);
 
 // Routes
 app.use("/api/products", productsRouter);
