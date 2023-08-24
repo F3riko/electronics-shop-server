@@ -12,12 +12,13 @@ var corsOptions = {
   credentials: true,
 };
 
-var productsRouter = require("./routes/Rest API/Products API/products");
 var userAuth = require("./routes/Rest API/User API/userAuth");
 var userAdd = require("./routes/Rest API/User API/userAdd");
-var categoriesList = require("./routes/Rest API/Products API/categories");
-var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
 var userInfo = require("./routes/Rest API/User API/userInfo");
+var userLogOut = require("./routes/Rest API/User API/userLogOut");
+var productsRouter = require("./routes/Rest API/Products API/products");
+var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
+var categoriesList = require("./routes/Rest API/Products API/categories");
 
 var app = express();
 app.use(cors(corsOptions));
@@ -37,9 +38,10 @@ app.use(cookieParser());
 app.use("/api/products", productsRouter);
 app.use("/api/auth/user", userAuth);
 app.use("/api/add/user", userAdd);
+app.use("/user/info", userInfo);
+app.use("/user/logout", userLogOut);
 app.use("/api/products/categories", categoriesList);
 app.use("/user/passReset", userPassResetMsg);
-app.use("/user/info", userInfo);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
