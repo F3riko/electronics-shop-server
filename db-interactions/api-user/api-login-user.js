@@ -4,7 +4,7 @@ const {
   generateRefreshToken,
   saveRefreshToken,
 } = require("../../utils/accessTokenOp");
-const UserNotFoundError = require("../../utils/customErrors");
+const { UserNotFoundError } = require("../../utils/customErrors");
 
 async function getUser(email, password, res) {
   try {
@@ -32,18 +32,19 @@ async function getUser(email, password, res) {
     const userData = results[0];
     const openData = JSON.stringify(userData.email);
 
-    const accessToken = generateAccessToken(userData.id);
+    // const accessToken = generateAccessToken(userData.id);
+    const accessToken = generateAccessToken(userData.email);
     const refreshToken = generateRefreshToken(userData.id);
     await saveRefreshToken(refreshToken, userData.id);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      // secure: true,
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      // secure: true,
+      secure: true,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie("openData", openData);
