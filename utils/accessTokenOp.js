@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
-const config = require("../config");
+const secret = process.env.JWT_SECRET;
 const connection = require("../db-interactions/db-init");
 
 function generateAccessToken(userId) {
-  return jwt.sign({ sub: userId }, config.secretKey, { expiresIn: "15m" });
+  return jwt.sign({ sub: userId }, secret, { expiresIn: "15m" });
 }
 
 function generateRefreshToken(userId) {
-  const refreshToken = jwt.sign({}, config.secretKey, { expiresIn: "7d" });
+  const refreshToken = jwt.sign({}, secret, { expiresIn: "7d" });
   return refreshToken;
 }
 
@@ -30,7 +30,7 @@ async function saveRefreshToken(refreshToken, userId) {
 
 function verifyToken(token) {
   try {
-    const decoded = jwt.verify(token, config.secretKey);
+    const decoded = jwt.verify(token, secret);
     return decoded;
   } catch (error) {
     throw new Error("Token verification failed");
