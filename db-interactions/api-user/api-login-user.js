@@ -4,7 +4,7 @@ const {
   generateRefreshToken,
   saveRefreshToken,
 } = require("../../utils/accessTokenOp");
-const UserNotFoundError = require("../../utils/customErrors");
+const { UserNotFoundError } = require("../../utils/customErrors");
 
 async function getUser(email, password, res) {
   try {

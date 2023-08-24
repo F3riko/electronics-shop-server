@@ -2,8 +2,8 @@ var express = require("express");
 var router = express.Router();
 const {
   getAllProducts,
-  getProductsByCategory,
 } = require("../../../db-interactions/api-products/api-products-interactions");
+const getProductsByCategory = require("../../../db-interactions/api-products/api-product-bycategory");
 
 router.get("/", async function (req, res, next) {
   try {
