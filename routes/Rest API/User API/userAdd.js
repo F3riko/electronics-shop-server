@@ -8,10 +8,10 @@ const connection = require("../../../db-interactions/db-init");
 // Temporary query - problems with async -> switch to mysql12/promise in the future or solve it
 router.post("/", async (req, res) => {
   try {
-    const queryText = "INSERT INTO users (email, password) VALUES (?, ?)";
+    const queryText = "INSERT INTO users (email, password, name) VALUES (?, ?)";
     connection.query(
       queryText,
-      [req.body.email, req.body.password],
+      [req.body.email, req.body.password, req.body.name],
       async (error, results) => {
         if (error) {
           throw error;
