@@ -22,6 +22,7 @@ var productsRouter = require("./routes/Rest API/Products API/products");
 var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
 var categoriesList = require("./routes/Rest API/Products API/categories");
 var productInfo = require("./routes/Rest API/Products API/product");
+var userProfile = require("./routes/Rest API/User API/userProfile");
 
 var app = express();
 app.use(cors(corsOptions));
@@ -55,6 +56,7 @@ app.use("/user/logout", userLogOut);
 app.use("/api/products/categories", categoriesList);
 app.use("/user/passReset", userPassResetMsg);
 app.use("/api/products/product", productInfo);
+app.use("/user/profile", userProfile);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
