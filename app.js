@@ -24,6 +24,7 @@ var categoriesList = require("./routes/Rest API/Products API/categories");
 var productInfo = require("./routes/Rest API/Products API/product");
 var userProfile = require("./routes/Rest API/User API/userProfile");
 var productImg = require("./routes/Rest API/Products API/productImg");
+var cartApi = require("./routes/Rest API/Cart API/cart");
 
 var app = express();
 app.use(cors(corsOptions));
@@ -44,7 +45,7 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 5 * 60 * 1000 },
+    cookie: { maxAge: 10 * 60 * 1000 },
   })
 );
 
@@ -59,6 +60,7 @@ app.use("/user/passReset", userPassResetMsg);
 app.use("/api/products/product", productInfo);
 app.use("/user/profile", userProfile);
 app.use("/api/products/product/img", productImg);
+app.use("/api/cart", cartApi);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
