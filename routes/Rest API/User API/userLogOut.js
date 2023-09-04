@@ -3,7 +3,6 @@ const router = express.Router();
 
 router.get("/", async function (req, res, next) {
   try {
-    console.log(req.session);
     const { accessToken, openData, refreshToken } = req.cookies;
     if (refreshToken && openData && accessToken) {
     } else {

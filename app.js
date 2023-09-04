@@ -5,6 +5,7 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var session = require("express-session");
+const MemoryStore = require("memorystore")(session);
 
 // Cors handling
 var cors = require("cors");
@@ -24,6 +25,7 @@ var categoriesList = require("./routes/Rest API/Products API/categories");
 var productInfo = require("./routes/Rest API/Products API/product");
 var userProfile = require("./routes/Rest API/User API/userProfile");
 var productImg = require("./routes/Rest API/Products API/productImg");
+var cartApi = require("./routes/Rest API/Cart API/cart");
 
 var app = express();
 app.use(cors(corsOptions));
@@ -33,20 +35,31 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 // Middleware
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: new MemoryStore({
+      checkPeriod: 86400000,
+    }),
+    cookie: { maxAge: 10 * 60 * 1000 },
+  })
+);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 5 * 60 * 1000 },
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET,
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: { maxAge: 10 * 60 * 1000 },
+//   })
+// );
 
 // Routes
 app.use("/api/products", productsRouter);
@@ -59,6 +72,7 @@ app.use("/user/passReset", userPassResetMsg);
 app.use("/api/products/product", productInfo);
 app.use("/user/profile", userProfile);
 app.use("/api/products/product/img", productImg);
+app.use("/api/cart", cartApi);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
