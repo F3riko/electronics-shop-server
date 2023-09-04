@@ -12,6 +12,7 @@ const {
   increaseCartItem,
   decreaseCartItem,
 } = require("../../../db-interactions/api-cart/api-item-op-cart");
+const calcCartInfo = require("../../../db-interactions/api-cart/api-calc-cart-info");
 
 router.get("/getCart", verifyTokenCart, async function (req, res, next) {
   try {
@@ -35,7 +36,6 @@ router.get("/getCart", verifyTokenCart, async function (req, res, next) {
       res.json({ contents: [] });
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "An error occurred" });
   }
 });
@@ -65,7 +65,6 @@ router.get("/add", async function (req, res, next) {
       throw new Error("No product id was provided");
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "An error occurred" });
   }
 });
@@ -96,6 +95,19 @@ router.get("/delete", verifyTokenCart, async function (req, res, next) {
       }
     } else {
       throw new Error("No product id was provided");
+    }
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+
+router.get("/getCartDetails", verifyTokenCart, async function (req, res, next) {
+  try {
+    if (req.session.cart) {
+      const { totalSum, totalWeight } = await calcCartInfo(req.session.cart);
+      res.json({ info: { totalSum, totalWeight } });
+    } else {
+      throw new Error("No session cart was provided");
     }
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
