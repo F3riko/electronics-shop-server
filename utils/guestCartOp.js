@@ -1,33 +1,41 @@
-const handleCartObj = (cart, productId, action) => {
-  const updatedCart = { ...cart };
-  if (updatedCart[productId]) {
-    const product = updatedCart[productId];
-    if (action === "incr") {
-      product.quantity += 1;
-    } else if (action === "decr") {
-      product.quantity = Math.max(product.quantity - 1, 1);
+function addItemGuestCart(productId, cart) {
+  if (cart) {
+    let updatedCart = cart.slice();
+    const existingItem = updatedCart.find(
+      (item) => item.item_id === parseInt(productId)
+    );
+    if (existingItem) {
+      existingItem.item_quantity++;
+    } else {
+      updatedCart.push({
+        cart_id: 0,
+        item_id: parseInt(productId),
+        item_quantity: 1,
+      });
     }
-
-    // Optionally, update the "selected" property if needed
-    // product.selected = true; // You can set this based on your logic
-
-    // Return the updated cart
     return updatedCart;
+  } else {
+    return [{ cart_id: 0, item_id: parseInt(productId), item_quantity: 1 }];
   }
+}
 
-  // If the product doesn't exist in the cart, you can handle it here
-  // For example, you can add it to the cart with an initial quantity of 1
-  if (action === "incr") {
-    updatedCart[productId] = { id: productId, quantity: 1, selected: true };
+function deleteGuestCartItem(productId, cart) {
+  if (cart) {
+    let updatedCart = cart.slice();
+    const itemIndex = updatedCart.findIndex(
+      (item) => item.item_id === parseInt(productId)
+    );
+    if (itemIndex !== -1) {
+      if (updatedCart[itemIndex].item_quantity > 1) {
+        updatedCart[itemIndex].item_quantity--;
+      } else {
+        updatedCart.splice(itemIndex, 1);
+      }
+    }
+    return updatedCart;
+  } else {
+    return [];
   }
+}
 
-  return updatedCart;
-};
-
-// Example usage:
-const cart = {
-  items: {
-    1: { id: 1, quantity: 4, selected: true },
-    // ...other items
-  },
-};
+module.exports = { addItemGuestCart, deleteGuestCartItem };
