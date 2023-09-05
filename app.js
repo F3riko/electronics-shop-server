@@ -26,6 +26,8 @@ var productInfo = require("./routes/Rest API/Products API/product");
 var userProfile = require("./routes/Rest API/User API/userProfile");
 var productImg = require("./routes/Rest API/Products API/productImg");
 var cartApi = require("./routes/Rest API/Cart API/cart");
+var newOrder = require("./routes/Rest API/Cart API/newOrder");
+var userOrderAuth = require("./routes/Rest API/User API/userAuthOrder");
 
 var app = express();
 app.use(cors(corsOptions));
@@ -52,15 +54,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET,
-//     resave: false,
-//     saveUninitialized: true,
-//     cookie: { maxAge: 10 * 60 * 1000 },
-//   })
-// );
-
 // Routes
 app.use("/api/products", productsRouter);
 app.use("/api/auth/user", userAuth);
@@ -73,6 +66,8 @@ app.use("/api/products/product", productInfo);
 app.use("/user/profile", userProfile);
 app.use("/api/products/product/img", productImg);
 app.use("/api/cart", cartApi);
+app.use("/api/newOrder", newOrder);
+app.use("/api/auth/userOrder", userOrderAuth);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {

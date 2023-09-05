@@ -30,6 +30,7 @@ router.get("/getCart", verifyTokenCart, async function (req, res, next) {
         res.json({ cartId: newCartId, contents: [] });
       }
     } else if (req.session.cart) {
+      console.log("here");
       res.json({ contents: req.session.cart });
     } else {
       req.session.cart = [];

@@ -4,8 +4,12 @@ const verifyTokenAndSession = require("../../../utils/userAuthMiddleware");
 
 router.get("/", verifyTokenAndSession, async function (req, res, next) {
   try {
-    const userData = req.decodedToken;
-    res.json(userData);
+    if (req.decodedToken) {
+      const userData = req.decodedToken;
+      res.json(userData);
+    } else {
+      req.status(403).json({ error: "Wrong credentials: access denied" });
+    }
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
