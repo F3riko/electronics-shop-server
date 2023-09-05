@@ -28,6 +28,23 @@ async function saveRefreshToken(refreshToken, userId) {
   );
 }
 
+async function clearRefreshToken(refreshToken) {
+  connection.query(
+    "DELETE FROM refresh_tokens WHERE token = ?",
+    [refreshToken],
+    (error, results) => {
+      if (error) {
+        throw error;
+      }
+      if (results.affectedRows === 1) {
+        return "Refresh token cleared";
+      } else {
+        throw new Error("Failed to clear refresh token");
+      }
+    }
+  );
+}
+
 function verifyToken(token) {
   try {
     const decoded = jwt.verify(token, secret);
@@ -42,4 +59,5 @@ module.exports = {
   generateRefreshToken,
   saveRefreshToken,
   verifyToken,
+  clearRefreshToken,
 };
