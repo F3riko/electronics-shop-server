@@ -6,7 +6,6 @@ async function calcCartInfo(cartItems) {
     let totalWeight = 0;
 
     for (const cartItem of cartItems) {
-      console.log(cartItem);
       const { item_id, item_quantity } = cartItem;
       const getItemInfoQuery = `
         SELECT weight, (price - discount) AS discounted_price
