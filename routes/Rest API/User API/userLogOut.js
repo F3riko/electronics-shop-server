@@ -1,19 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const { clearRefreshToken } = require("../../../utils/accessTokenOp")
 
 router.get("/", async function (req, res, next) {
   try {
-    const { accessToken, openData, refreshToken } = req.cookies;
-    if (refreshToken && openData && accessToken) {
-    } else {
-      return res.status(400).json({ error: "Missing user data" });
+    const { refreshToken } = req.cookies;
+    if (refreshToken) {
+      await clearRefreshToken(refreshToken);
     }
-    // await clearRefreshToken(userId, refreshToken);
-    // res.clearCookie()
-    res.cookie("accessToken", "", { expires: new Date(0) });
-    res.cookie("openData", "", { expires: new Date(0) });
-    res.cookie("refreshToken", "", { expires: new Date(0) });
-    res.cookie("connect.sid", "", { expires: new Date(0) });
+    res.clearCookie("accessToken");
+    res.clearCookie("openData");
+    res.clearCookie("refreshToken");
+    res.clearCookie("connect.sid");
+
     res.json({ message: "Logout successful" });
   } catch (error) {
     console.error(error);

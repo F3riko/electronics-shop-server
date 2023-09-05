@@ -13,6 +13,8 @@ router.get("/", async function (req, res, next) {
       throw new Error("Img wasn't found");
     } else {
       const fileName = result.img;
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.setHeader("Expires", new Date(Date.now() + 3600000).toUTCString());
       res.sendFile(path.join(__dirname, `../../../public/images/${fileName}`));
     }
   } catch (error) {
