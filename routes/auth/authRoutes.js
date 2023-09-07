@@ -14,7 +14,7 @@ const {
 
 // root - auth
 router.get("/logout", logOutUser);
-router.get("/register", registerUser);
+router.post("/register", registerUser);
 // auth/resetpass/token -> create separate route for email
 // router.get("/token")
 // auth/resetpass/:token
