@@ -1,4 +1,6 @@
 const userModel = require("../models/userModel");
+const sendEmail = require("../utils/auth/emailAuth");
+const connection = require("../config/database");
 // Temporary import
 const { clearRefreshToken } = require("../utils/auth/tokenUtils");
 
@@ -89,8 +91,17 @@ async function resetUserPassword(req, res, next) {
           .json({ error: "Missing required data in request body" });
         return;
       }
-      const resetTokne = await userModel.resetMsg(req.body.userEmail);
-      res.status(200).json(`user/passReset?resetToken=${resetTokne}`);
+      const resetToken = await userModel.resetMsg(req.body.userEmail);
+      const link = `http://localhost:3000/user/passReset?resetToken=${resetToken}`;
+
+      const emailStatus = await sendEmail(link, req.body.userEmail);
+      sendEmail;
+      if (emailStatus) {
+        res.json(200);
+      } else {
+        console.error("Email hasn't been sent");
+        res.json(500);
+      }
     }
   } catch (error) {
     if (error.name === "UserNotFoundError") {
