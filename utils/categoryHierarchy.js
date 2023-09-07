@@ -1,7 +1,3 @@
-const {
-  getCategoriesList,
-} = require("../db-interactions/api-products/api-products-interactions");
-
 const getCategoriesByParent = (categories, parentId) => {
   const parentIdNum = Number(parentId);
   return categories.filter(
@@ -19,10 +15,5 @@ const getAllChildrenCategories = (categoriesArray, parentId) => {
   return result;
 };
 
-const getChildrenCategoriesArray = async (parentId) => {
-  const categories = await getCategoriesList();
-  const result = getAllChildrenCategories(categories, parentId);
-  return result.map((category) => category.id);
-};
 
-module.exports = getChildrenCategoriesArray;
+module.exports = getAllChildrenCategories;

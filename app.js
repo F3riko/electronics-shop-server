@@ -15,26 +15,8 @@ var corsOptions = {
   credentials: true,
 };
 
-var userAuth = require("./routes/Rest API/User API/userAuth");
-var userAdd = require("./routes/Rest API/User API/userAdd");
-var userInfo = require("./routes/Rest API/User API/userInfo");
-var userLogOut = require("./routes/Rest API/User API/userLogOut");
-var productsRouter = require("./routes/Rest API/Products API/products");
-var userPassResetMsg = require("./routes/Rest API/User API/userPassResetMsg");
-var categoriesList = require("./routes/Rest API/Products API/categories");
-var productInfo = require("./routes/Rest API/Products API/product");
-var userProfile = require("./routes/Rest API/User API/userProfile");
-var productImg = require("./routes/Rest API/Products API/productImg");
-var cartApi = require("./routes/Rest API/Cart API/cart");
-var newOrder = require("./routes/Rest API/Cart API/newOrder");
-var userOrderAuth = require("./routes/Rest API/User API/userAuthOrder");
-
 var app = express();
 app.use(cors(corsOptions));
-
-// View engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
 
 // Middleware
 app.use(
@@ -54,20 +36,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
 
-// Routes
-app.use("/api/products", productsRouter);
-app.use("/api/auth/user", userAuth);
-app.use("/api/add/user", userAdd);
-app.use("/user/info", userInfo);
-app.use("/user/logout", userLogOut);
-app.use("/api/products/categories", categoriesList);
-app.use("/user/passReset", userPassResetMsg);
-app.use("/api/products/product", productInfo);
-app.use("/user/profile", userProfile);
-app.use("/api/products/product/img", productImg);
-app.use("/api/cart", cartApi);
-app.use("/api/newOrder", newOrder);
-app.use("/api/auth/userOrder", userOrderAuth);
+// New routes import
+const productRoutes = require("./routes/api/productRoutes");
+const authRoutes = require("./routes/auth/authRoutes");
+const cartRoutes = require("./routes/api/cartRoutes");
+const orderRoutes = require("./routes/api/orderRoutes");
+// New routes declaration
+app.use("/products", productRoutes);
+app.use("/auth", authRoutes);
+app.use("/cart", cartRoutes);
+app.use("/order", orderRoutes);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -79,10 +57,8 @@ app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
-
   // render the error page
   res.status(err.status || 500);
-  res.render("error");
 });
 
 module.exports = app;
