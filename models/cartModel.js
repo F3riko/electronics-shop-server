@@ -1,91 +1,79 @@
 const connection = require("../config/database");
+const util = require("util");
+const query = util.promisify(connection.query).bind(connection);
 
-async function getCartId(email) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT c.cart_id
-      FROM users u
-      LEFT JOIN carts c ON u.id = c.user_id
-      WHERE u.email = ?;
-    `;
-
-    connection.query(query, [email], (error, results) => {
-      if (error) {
-        reject(error);
-      } else {
-        if (results.length > 0) {
-          const cartId = results[0].cart_id;
-          resolve(cartId);
-        } else {
-          reject(new Error("Error getting cart"));
-        }
-      }
-    });
-  });
-}
-
+const getCartIdQuery = `
+SELECT c.cart_id
+FROM users u
+LEFT JOIN carts c ON u.id = c.user_id
+  WHERE u.email = ?;
+  `;
 const increaseCartItemQuery = `
   INSERT INTO cart_contents (cart_id, item_id, item_quantity)
   VALUES (?, ?, 1)
   ON DUPLICATE KEY UPDATE item_quantity = item_quantity + 1;
-`;
+  `;
 
 const getItemQuantityQuery = `
-        SELECT i.quantity AS item_quantity, cc.item_quantity AS cart_quantity
-        FROM items AS i
-        LEFT JOIN cart_contents AS cc ON i.id = cc.item_id AND cc.cart_id = ?
-        WHERE i.id = ?;
-      `;
+  SELECT i.quantity AS item_quantity, cc.item_quantity AS cart_quantity
+  FROM items AS i
+  LEFT JOIN cart_contents AS cc ON i.id = cc.item_id AND cc.cart_id = ?
+  WHERE i.id = ?;
+  `;
 
 const decreaseCartItemQuery = `
   UPDATE cart_contents
   SET item_quantity = item_quantity - 1
   WHERE cart_id = ? AND item_id = ? AND item_quantity > 1;
-`;
+  `;
 
 const deleteCartItemQuery = `
   DELETE FROM cart_contents
   WHERE cart_id = ? AND item_id = ?;
-`;
+  `;
+
+async function getCartId(email) {
+  try {
+    const results = await query(getCartIdQuery, [email]);
+
+    if (results.length > 0) {
+      const cartId = results[0].cart_id;
+      return cartId;
+    } else {
+      throw new Error("Error getting cart");
+    }
+  } catch (error) {
+    console.error("Error getting cart:", error);
+    throw error;
+  }
+}
 
 async function getItemInfo(cartId, itemId) {
-  return new Promise((resolve, reject) => {
-    connection.query(
-      getItemQuantityQuery,
-      [cartId, itemId],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          if (results.length > 0) {
-            resolve(results);
-          } else {
-            reject(new Error("Error getting item info"));
-          }
-        }
-      }
-    );
-  });
+  try {
+    const results = await query(getItemQuantityQuery, [cartId, itemId]);
+
+    if (results.length > 0) {
+      return results;
+    } else {
+      throw new Error("Error getting item info");
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function increCartItemQuantity(cartId, itemId) {
-  return new Promise((resolve, reject) => {
-    connection.query(
-      increaseCartItemQuery,
-      [cartId, itemId],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          if (results.affectedRows > 0) {
-            resolve(results);
-          } else {
-            reject(new Error("Error increasing quantity"));
-          }
-        }
-      }
-    );
-  });
+  try {
+    const results = await query(increaseCartItemQuery, [cartId, itemId]);
+
+    if (results.affectedRows > 0) {
+      return results;
+    } else {
+      throw new Error("Error increasing quantity");
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function increaseCartItem(cartId, itemId) {
@@ -112,43 +100,31 @@ async function increaseCartItem(cartId, itemId) {
 }
 
 async function decreaseCartItemSQL(cartId, itemId) {
-  return new Promise((resolve, reject) => {
-    connection.query(
-      decreaseCartItemQuery,
-      [cartId, itemId],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          if (results) {
-            resolve(results);
-          } else {
-            reject(new Error("Error decreasing item"));
-          }
-        }
-      }
-    );
-  });
+  try {
+    const results = await query(decreaseCartItemQuery, [cartId, itemId]);
+
+    if (results) {
+      return results;
+    } else {
+      throw new Error("Error decreasing item");
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function deleteCartItem(cartId, itemId) {
-  return new Promise((resolve, reject) => {
-    connection.query(
-      deleteCartItemQuery,
-      [cartId, itemId],
-      (error, results) => {
-        if (error) {
-          reject(error);
-        } else {
-          if (results) {
-            resolve(results);
-          } else {
-            reject(new Error("Error deleting item"));
-          }
-        }
-      }
-    );
-  });
+  try {
+    const results = await query(deleteCartItemQuery, [cartId, itemId]);
+
+    if (results) {
+      return results;
+    } else {
+      throw new Error("Error deleting item");
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function decreaseCartItem(cartId, itemId) {
@@ -166,86 +142,83 @@ async function decreaseCartItem(cartId, itemId) {
 }
 
 async function getCartContents(cartId) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *
-      FROM cart_contents
-      WHERE cart_id = ?;
-    `;
-
-    connection.query(query, [cartId], (error, results) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(results);
-      }
-    });
-  });
+  try {
+    const results = await query(
+      "SELECT * FROM cart_contents WHERE cart_id = ?",
+      [cartId]
+    );
+    return results;
+  } catch (error) {
+    console.error("Error fetching cart contents:", error);
+    throw error;
+  }
 }
 
 async function calcCartInfo(cartItems) {
-  return new Promise(async (resolve, reject) => {
+  try {
     let totalSum = 0;
     let totalWeight = 0;
 
     for (const cartItem of cartItems) {
       const { item_id, item_quantity } = cartItem;
       const getItemInfoQuery = `
-          SELECT weight, (price - discount) AS discounted_price
-          FROM items
-          WHERE id = ?;
-        `;
+        SELECT weight, (price - discount) AS discounted_price
+        FROM items
+        WHERE id = ?;
+      `;
 
-      try {
-        const itemInfo = await executeQuery(getItemInfoQuery, [item_id]);
-        if (itemInfo.length === 1) {
-          const { weight, discounted_price } = itemInfo[0];
-          totalSum += discounted_price * item_quantity;
-          totalWeight += weight * item_quantity;
-        }
-      } catch (error) {
-        reject(error);
+      const itemInfo = await query(getItemInfoQuery, [item_id]);
+
+      if (itemInfo.length === 1) {
+        const { weight, discounted_price } = itemInfo[0];
+        totalSum += discounted_price * item_quantity;
+        totalWeight += weight * item_quantity;
       }
     }
 
-    resolve({ totalSum, totalWeight });
-  });
+    return { totalSum, totalWeight };
+  } catch (error) {
+    throw error;
+  }
 }
 
-async function executeQuery(query, params) {
-  return new Promise((resolve, reject) => {
-    connection.query(query, params, (error, results) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(results);
-      }
-    });
-  });
+async function executeQuery(queryStr, params) {
+  try {
+    const results = await query(queryStr, params);
+    return results;
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function createCartForUser(email) {
-  return new Promise((resolve, reject) => {
+  try {
     const createCartQuery = `
-        INSERT INTO carts (user_id, cart_expiration_date)
-        SELECT u.id, DATE_ADD(NOW(), INTERVAL 7 DAY)
-        FROM users u
-        WHERE u.email = ?;
-      `;
+      INSERT INTO carts (user_id, cart_expiration_date)
+      SELECT u.id, DATE_ADD(NOW(), INTERVAL 7 DAY)
+      FROM users u
+      WHERE u.email = ?;
+    `;
 
-    connection.query(createCartQuery, [email], (error, results) => {
-      if (error) {
-        reject(error);
-      } else {
-        if (results.affectedRows === 1) {
-          console.log(results.insertId);
-          resolve(results.insertId);
-        } else {
-          reject(new Error("Cart insertion failed"));
-        }
-      }
-    });
-  });
+    const results = await query(createCartQuery, [email]);
+
+    if (results.affectedRows === 1) {
+      return results.insertId;
+    } else {
+      throw new Error("Cart insertion failed");
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
-module.exports = { getCartId, getItemInfo, increCartItemQuantity, increaseCartItem, decreaseCartItem, getCartContents, calcCartInfo, createCartForUser};
+module.exports = {
+  getCartId,
+  getItemInfo,
+  increCartItemQuantity,
+  increaseCartItem,
+  decreaseCartItem,
+  getCartContents,
+  calcCartInfo,
+  createCartForUser,
+};

@@ -1,5 +1,7 @@
 const connection = require("../config/database");
 const { calcCartInfo } = require("./cartModel");
+const util = require("util");
+const query = util.promisify(connection.query).bind(connection);
 
 async function createNewOrder(orderData, userEmail) {
   // Getting total price and total weight of the items
@@ -22,33 +24,33 @@ async function createNewOrder(orderData, userEmail) {
   return orderId;
 }
 
-function createOrder(email, totalPrice, totalWeight) {
-  return new Promise((resolve, reject) => {
+async function createOrder(email, totalPrice, totalWeight) {
+  try {
     const createOrderQuery = `
       INSERT INTO orders (user_id, order_date, total_price, status, is_paid, total_weight)
       SELECT id, NOW(), ?, 'CR', false, ? FROM users WHERE email = ?
     `;
 
-    connection.query(
-      createOrderQuery,
-      [totalPrice, totalWeight, email],
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.insertId);
-        }
-      }
-    );
-  });
+    const result = await query(createOrderQuery, [
+      totalPrice,
+      totalWeight,
+      email,
+    ]);
+
+    return result.insertId;
+  } catch (error) {
+    console.error("Error creating order:", error);
+    throw error;
+  }
 }
 
-function addOrderItems(orderId, orderData) {
-  return new Promise((resolve, reject) => {
+async function addOrderItems(orderId, orderData) {
+  try {
     const insertItemsQuery = `
       INSERT INTO orders_items (order_id, item_id, quantity)
       VALUES ?
     `;
+
     const values = [];
 
     for (const key in orderData) {
@@ -59,18 +61,15 @@ function addOrderItems(orderId, orderData) {
     }
 
     if (values.length === 0) {
-      resolve(0);
-      return;
+      return 0;
     }
 
-    connection.query(insertItemsQuery, [values], (error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result.affectedRows);
-      }
-    });
-  });
+    const result = await query(insertItemsQuery, [values]);
+
+    return result.affectedRows;
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = createNewOrder;

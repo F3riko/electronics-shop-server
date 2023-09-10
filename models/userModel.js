@@ -6,34 +6,21 @@ const {
   verifyToken,
 } = require("../utils/auth/tokenUtils");
 const { UserNotFoundError } = require("../utils/auth/customErrors");
+const util = require("util");
+const query = util.promisify(connection.query).bind(connection);
 
 async function getUser(email, password, res) {
   try {
-    const results = await new Promise((resolve, reject) => {
-      const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
-      connection.query(
-        queryText,
-        [email, password],
-        function (err, results, fields) {
-          if (err) {
-            console.error("Error fetching user getUser func:", err);
-            reject(err);
-            return;
-          }
-          if (results.length == 0) {
-            reject(new UserNotFoundError("No user found"));
-            return;
-          } else {
-            resolve(results);
-          }
-        }
-      );
-    });
+    const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
+    const results = await query(queryText, [email, password]);
+
+    if (results.length === 0) {
+      throw new UserNotFoundError("No user found");
+    }
 
     const userData = results[0];
     const openData = JSON.stringify(userData.email);
 
-    // const accessToken = generateAccessToken(userData.id);
     const accessToken = generateAccessToken(userData.email);
     const refreshToken = generateRefreshToken(userData.id);
     await saveRefreshToken(refreshToken, userData.id);
@@ -57,22 +44,13 @@ async function getUser(email, password, res) {
 
 async function resetMsg(email) {
   try {
-    const results = await new Promise((resolve, reject) => {
-      const queryText = `SELECT * FROM users WHERE email = ?`;
-      connection.query(queryText, [email], function (err, results, fields) {
-        if (err) {
-          console.error("Error fetching user:", err);
-          reject(err);
-          return;
-        }
-        if (results.length == 0) {
-          reject(new UserNotFoundError("No user found"));
-          return;
-        } else {
-          resolve(results);
-        }
-      });
-    });
+    const queryText = `SELECT * FROM users WHERE email = ?`;
+    const results = await query(queryText, [email]);
+
+    if (results.length === 0) {
+      throw new UserNotFoundError("No user found");
+    }
+
     const userData = results[0];
     if (userData) {
       const resetToken = generateAccessToken(email);
@@ -89,43 +67,20 @@ async function resetPassword(resetToken, newPassword) {
   try {
     const tokenData = await verifyToken(resetToken).sub;
     if (tokenData) {
-      const results = await new Promise((resolve, reject) => {
-        const queryText = `SELECT * FROM users WHERE email = ?`;
-        connection.query(
-          queryText,
-          [tokenData],
-          function (err, results, fields) {
-            if (err) {
-              console.error("Error fetching user 1:", err);
-              reject(err);
-              return;
-            }
-            if (results.length == 0) {
-              reject(new UserNotFoundError("No user found"));
-              return;
-            } else {
-              resolve(results);
-            }
-          }
-        );
-      });
+      const queryText = `SELECT * FROM users WHERE email = ?`;
+      const results = await query(queryText, [tokenData]);
+
+      if (results.length === 0) {
+        throw new UserNotFoundError("No user found");
+      }
+
       const userData = results[0];
       const updateQuery = `UPDATE users SET password = ? WHERE id = ?`;
-      const updateResults = await new Promise((resolve, reject) => {
-        connection.query(
-          updateQuery,
-          [newPassword, userData.id],
-          function (err, results, fields) {
-            if (err) {
-              console.error("Error updating password:", err);
-              reject(err);
-              return;
-            }
-            console.log("Password updated successfully");
-            resolve(results);
-          }
-        );
-      });
+      const updateResults = await query(updateQuery, [
+        newPassword,
+        userData.id,
+      ]);
+
       if (updateResults.affectedRows === 1) {
         return { email: userData.email, newPassword };
       } else {
@@ -135,33 +90,25 @@ async function resetPassword(resetToken, newPassword) {
       throw new Error("Token verification failed");
     }
   } catch (error) {
+    console.error("Error updating password:", error);
     throw error;
   }
 }
 
 async function getUserData(email) {
   try {
-    const results = await new Promise((resolve, reject) => {
-      const queryText = `SELECT * FROM users WHERE email = ?`;
-      connection.query(queryText, [email], function (err, results, fields) {
-        if (err) {
-          console.error("Error fetching user:", err);
-          reject(err);
-          return;
-        }
-        if (results.length == 0) {
-          reject(new UserNotFoundError("No user found"));
-          return;
-        } else {
-          resolve(results);
-        }
-      });
-    });
+    const queryText = `SELECT * FROM users WHERE email = ?`;
+    const results = await query(queryText, [email]);
+
+    if (results.length === 0) {
+      throw new UserNotFoundError("No user found");
+    }
+
     return results;
   } catch (error) {
+    console.error("Error fetching user:", error);
     throw error;
   }
 }
-
 
 module.exports = { getUser, resetMsg, resetPassword, getUserData };
