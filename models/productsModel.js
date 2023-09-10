@@ -1,96 +1,52 @@
 const connection = require("../config/database");
 const getAllChildrenCategories = require("../utils/categoryHierarchy");
+const util = require("util");
+const query = util.promisify(connection.query).bind(connection);
 
-const getProductData = (id) => {
-  return new Promise((resolve, reject) => {
-    try {
-      connection.query(
-        "SELECT * FROM items WHERE id = ?",
-        id,
-        function (err, results, fields) {
-          if (err) {
-            console.error("Error fetching products:", err);
-            reject(err);
-          } else {
-            if (results.length > 0) {
-              resolve(results[0]);
-            } else {
-              resolve(null);
-            }
-          }
-        }
-      );
-    } catch (error) {
-      reject(error);
+const getProductData = async (id) => {
+  try {
+    const results = await query("SELECT * FROM items WHERE id = ?", id);
+
+    if (results.length > 0) {
+      return results[0];
+    } else {
+      return null;
     }
-  });
+  } catch (error) {
+    throw error;
+  }
 };
 
 async function getAllProducts() {
   try {
-    const results = await new Promise((resolve, reject) => {
-      connection.query("SELECT * FROM items", function (err, results, fields) {
-        if (err) {
-          console.error("Error fetching products:", err);
-          reject(err);
-          return;
-        }
-
-        resolve(results);
-      });
-    });
-
+    const results = await query("SELECT * FROM items");
     return results;
   } catch (error) {
     throw error;
   }
 }
 
-const getImgByProductId = (id) => {
-  const result = new Promise((resolve, reject) => {
-    try {
-      connection.query(
-        "SELECT img FROM items WHERE id = ?",
-        id,
-        function (err, results, fields) {
-          if (err) {
-            console.error("Error fetching img:", err);
-            reject(err);
-          } else {
-            if (results.length > 0) {
-              resolve(results[0]);
-            } else {
-              resolve(null);
-            }
-          }
-        }
-      );
-    } catch (error) {
-      reject(error);
+const getImgByProductId = async (id) => {
+  try {
+    const results = await query("SELECT img FROM items WHERE id = ?", id);
+
+    if (results.length > 0) {
+      return results[0];
+    } else {
+      return null;
     }
-  });
-  return result;
+  } catch (error) {
+    console.error("Error fetching img:", error);
+    throw error;
+  }
 };
 
 async function getCategoriesList() {
   try {
-    const results = await new Promise((resolve, reject) => {
-      connection.query(
-        "SELECT * FROM categories",
-        function (err, results, fields) {
-          if (err) {
-            console.error("Error fetching categories:", err);
-            reject(err);
-            return;
-          }
-
-          resolve(results);
-        }
-      );
-    });
-
+    const results = await query("SELECT * FROM categories");
     return results;
   } catch (error) {
+    console.error("Error fetching categories:", error);
     throw error;
   }
 }
@@ -101,26 +57,20 @@ async function getProductsByCategory(categoryId) {
       Number(categoryId),
       ...(await getChildrenCategoriesArray(categoryId)),
     ];
-    let query;
+
+    let queryStr;
     if (allCategories.length === 1) {
-      query = "SELECT * FROM items WHERE category_id = ?";
+      queryStr = "SELECT * FROM items WHERE category_id = ?";
     } else {
       const placeholders = Array(allCategories.length).fill("?").join(", ");
-      query = `SELECT * FROM items WHERE category_id IN (${placeholders})`;
+      queryStr = `SELECT * FROM items WHERE category_id IN (${placeholders})`;
     }
-    const results = await new Promise((resolve, reject) => {
-      connection.query(query, allCategories, function (err, results, fields) {
-        if (err) {
-          console.error("Error fetching products:", err);
-          reject(err);
-        } else {
-          resolve(results);
-        }
-      });
-    });
+
+    const results = await query(queryStr, allCategories);
 
     return results;
   } catch (error) {
+    console.error("Error fetching products:", error);
     throw error;
   }
 }
