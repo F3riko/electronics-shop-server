@@ -7,6 +7,8 @@ const {
   resetUserPassword,
   getUserProfile,
   authUser,
+  manageUserWishlist,
+  getUsersWishList,
 } = require("../../controllers/userController");
 const {
   verifyTokenAndSession,
@@ -21,6 +23,8 @@ router.post("/register", registerUser);
 router.post("/passReset", resetUserPassword);
 router.post("/login", loginUser);
 router.get("/profile", verifyTokenAndSession, getUserProfile);
+router.post("/wishlist", verifyTokenAndSession, manageUserWishlist);
+router.get("/wishlist", verifyTokenAndSession, getUsersWishList);
 
 // middleware routes
 router.get("/order", verifyTokenAndSession);

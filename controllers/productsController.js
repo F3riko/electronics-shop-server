@@ -7,6 +7,7 @@ const {
   getProductsSortedSQL,
   searchItemsByTitle,
   getMinMaxPricesByCategory,
+  getSelectedProductsByIdSQL,
 } = require("../models/productsModel");
 const path = require("path");
 
@@ -105,6 +106,19 @@ async function searchProductsByQuery(req, res, next) {
   }
 }
 
+async function getSelectedProductsById(req, res, next) {
+  try {
+    if (!req.body.productsIds) {
+      throw new Error("No ids were provided");
+    }
+    const products = await getSelectedProductsByIdSQL(req.body.productsIds);
+    res.json(products);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+}
+
 module.exports = {
   getPricesRange,
   getProductsSorted,
@@ -114,4 +128,5 @@ module.exports = {
   getCategories,
   getProductByCategoryController,
   searchProductsByQuery,
+  getSelectedProductsById,
 };

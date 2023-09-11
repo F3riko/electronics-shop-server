@@ -19,11 +19,13 @@ async function getUser(email, password, res) {
     }
 
     const userData = results[0];
-    const openData = JSON.stringify(userData.email);
+    // const openData = JSON.stringify(userData.email);
+    const openData = JSON.stringify({ id: userData.id, name: userData.name });
 
     const accessToken = generateAccessToken(userData.email);
     const refreshToken = generateRefreshToken(userData.id);
     await saveRefreshToken(refreshToken, userData.id);
+    const wishlist = await getUserWishListSQL(userData.id);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -31,6 +33,11 @@ async function getUser(email, password, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie("wishlist", wishlist, {
       httpOnly: true,
       secure: true,
       maxAge: 15 * 60 * 1000,
@@ -111,4 +118,50 @@ async function getUserData(email) {
   }
 }
 
-module.exports = { getUser, resetMsg, resetPassword, getUserData };
+const addItemToWishList = async (userId, productId) => {
+  try {
+    const addQueryText =
+      "INSERT IGNORE INTO wishlist (user_id, item_id) VALUES (?, ?)";
+    const result = await query(addQueryText, [userId, productId]);
+    if (result.affectedRows === 0) {
+      throw new Error("Item is already in the wishlist.");
+    }
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteItemFromWishlist = async (userId, productId) => {
+  try {
+    const deleteQueryText =
+      "DELETE FROM wishlist WHERE user_id = ? AND item_id = ?";
+    const result = await query(deleteQueryText, [userId, productId]);
+    if (result.affectedRows === 0) {
+      throw new Error("Item was not found in the wishlist");
+    }
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getUserWishListSQL = async (userId) => {
+  try {
+    const queryText = "SELECT item_id FROM wishlist WHERE user_id = ?";
+    const result = await query(queryText, [userId]);
+    return result.map((row) => row.item_id);
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = {
+  getUser,
+  resetMsg,
+  resetPassword,
+  getUserData,
+  getUserWishListSQL,
+  deleteItemFromWishlist,
+  addItemToWishList,
+};

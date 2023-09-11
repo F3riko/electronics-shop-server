@@ -25,12 +25,8 @@ const verifyTokenAndSession = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, secretKey);
-    if (req.session && JSON.parse(req.cookies.openData) === decoded.sub) {
-      req.decodedToken = decoded.sub;
-      next();
-    } else {
-      return res.status(401).json({ error: "Unauthorized: Invalid session" });
-    }
+    req.decodedToken = decoded.sub;
+    next();
   } catch (error) {
     return res.status(401).json({ error: "Unauthorized: Invalid token" });
   }
@@ -43,12 +39,8 @@ const verifyTokenCart = (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, secretKey);
-    if (req.session && JSON.parse(req.cookies.openData) === decoded.sub) {
-      req.decodedToken = decoded.sub;
-      return next();
-    } else {
-      return next();
-    }
+    req.decodedToken = decoded.sub;
+    return next();
   } catch (error) {
     return next();
   }
