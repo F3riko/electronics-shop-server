@@ -142,7 +142,18 @@ const getMinMaxPricesByCategory = async (categoryId) => {
   }
 };
 
+const getSelectedProductsByIdSQL = async (productIds) => {
+  try {
+    const queryText = "SELECT * FROM items WHERE id IN (?)";
+    const result = await query(queryText, [JSON.parse(productIds)]);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
+  getSelectedProductsByIdSQL,
   getMinMaxPricesByCategory,
   searchItemsByTitle,
   getProductsSortedSQL,

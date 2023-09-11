@@ -36,7 +36,6 @@ async function registerUser(req, res) {
       }
     );
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ error: "An error occurred" });
   }
 }
@@ -68,6 +67,7 @@ async function logOutUser(req, res, next) {
     res.clearCookie("openData");
     res.clearCookie("refreshToken");
     res.clearCookie("connect.sid");
+    res.clearCookie("wishlist");
 
     res.json({ message: "Logout successful" });
   } catch (error) {
@@ -178,6 +178,40 @@ function updateUserProfile(req, res) {
   // Handle user profile update logic using userModel functions
 }
 
+async function manageUserWishlist(req, res, next) {
+  try {
+    const { itemInWishList, productId, userId } = req.body;
+    if (itemInWishList === undefined || !productId || !userId) {
+      throw new Error("Missing required data");
+    }
+
+    if (itemInWishList) {
+      await userModel.deleteItemFromWishlist(userId, productId);
+    } else {
+      await userModel.addItemToWishList(userId, productId);
+    }
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+}
+
+async function getUsersWishList(req, res, next) {
+  try {
+    const userId = req.query.userId;
+
+    if (!userId) {
+      throw new Error("Missing required data");
+    }
+
+    const wishListArray = await userModel.getUserWishListSQL(userId);
+    res.json(wishListArray);
+  } catch (error) {
+    res.sendStatus(500);
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -187,4 +221,6 @@ module.exports = {
   resetUserPassword,
   authUser,
   verifyOrderForUser,
+  manageUserWishlist,
+  getUsersWishList,
 };
