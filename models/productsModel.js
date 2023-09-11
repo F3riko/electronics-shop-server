@@ -75,13 +75,77 @@ async function getProductsByCategory(categoryId) {
   }
 }
 
+async function getProductsSortedSQL(params) {
+  try {
+    let queryStr = "SELECT * FROM items WHERE 1=1";
+    const { maxPrice, minPrice, sortBy, category } = params;
+    if (maxPrice) {
+      queryStr += ` AND price <= ${parseFloat(maxPrice)}`;
+    }
+    if (minPrice) {
+      queryStr += ` AND price >= ${parseFloat(minPrice)}`;
+    }
+    if (category) {
+      const categories = await getChildrenCategoriesArray(category);
+      categories.push(parseInt(category));
+      queryStr += ` AND category_id IN (${categories.join(", ")})`;
+    }
+    if (sortBy === "rating") {
+      queryStr += " ORDER BY item_rating DESC";
+    } else if (sortBy === "reviews") {
+      queryStr += " ORDER BY reviews_quantity DESC";
+    } else if (sortBy === "priceDsc") {
+      queryStr += " ORDER BY price DESC";
+    } else if (sortBy === "priceAsc") {
+      queryStr += " ORDER BY price ASC";
+    }
+
+    const result = await query(queryStr);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function searchItemsByTitle(searchQuery) {
+  try {
+    const sanitizedSearchQuery = connection.escape(`%${searchQuery}%`);
+    const queryStr = `SELECT * FROM items WHERE title LIKE ${sanitizedSearchQuery}`;
+    const result = await query(queryStr);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
 const getChildrenCategoriesArray = async (parentId) => {
   const categories = await getCategoriesList();
   const result = getAllChildrenCategories(categories, parentId);
   return result.map((category) => category.id);
 };
 
+const getMinMaxPricesByCategory = async (categoryId) => {
+  try {
+    let queryText =
+      "SELECT MIN(price) AS minPrice, MAX(price) AS maxPrice FROM items";
+    if (categoryId > 0) {
+      const categories = await getChildrenCategoriesArray(categoryId);
+      categories.push(categoryId);
+      queryText += ` WHERE category_id IN (${categories.join(", ")})`;
+    }
+    const result = await query(queryText);
+
+    return result[0];
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
+  getMinMaxPricesByCategory,
+  searchItemsByTitle,
+  getProductsSortedSQL,
   getProductData,
   getAllProducts,
   getImgByProductId,

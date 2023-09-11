@@ -4,6 +4,9 @@ const {
   getImgByProductId,
   getCategoriesList,
   getProductsByCategory,
+  getProductsSortedSQL,
+  searchItemsByTitle,
+  getMinMaxPricesByCategory,
 } = require("../models/productsModel");
 const path = require("path");
 
@@ -72,10 +75,43 @@ async function getProductByCategoryController(req, res, next) {
   }
 }
 
+async function getProductsSorted(req, res, next) {
+  try {
+    const products = await getProductsSortedSQL(req.query);
+    res.json(products);
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getPricesRange(req, res, next) {
+  try {
+    const prices = await getMinMaxPricesByCategory(req.query.category);
+    res.json(prices);
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function searchProductsByQuery(req, res, next) {
+  try {
+    if (!req.query.searchQuery) {
+      throw new Error("No search query");
+    }
+    const products = await searchItemsByTitle(req.query.searchQuery);
+    res.json(products);
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
+  getPricesRange,
+  getProductsSorted,
   getProductById,
   getAllProductsController,
   getProductImgById,
   getCategories,
   getProductByCategoryController,
+  searchProductsByQuery,
 };
