@@ -1,4 +1,4 @@
-const createNewOrder = require("../models/orderModel");
+const { createNewOrder, getOrderWithItems } = require("../models/orderModel");
 
 async function createOrderController(req, res, next) {
   try {
@@ -22,4 +22,20 @@ async function createOrderController(req, res, next) {
   }
 }
 
-module.exports = { createOrderController };
+const getOrderById = async (req, res, next) => {
+  try {
+    const orderId = req.body.id;
+    if (!orderId) {
+      throw new Error("Missing required data");
+    }
+    const orderData = await getOrderWithItems(orderId);
+    if (!orderData) {
+      throw new Error("No order data was retrieved");
+    }
+    res.json(orderData);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+module.exports = { createOrderController, getOrderById };

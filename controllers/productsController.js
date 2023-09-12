@@ -81,7 +81,7 @@ async function getProductsSorted(req, res, next) {
     const products = await getProductsSortedSQL(req.query);
     res.json(products);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: "An error occurred" });
   }
 }
 
@@ -90,7 +90,7 @@ async function getPricesRange(req, res, next) {
     const prices = await getMinMaxPricesByCategory(req.query.category);
     res.json(prices);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: "An error occurred" });
   }
 }
 
@@ -102,7 +102,7 @@ async function searchProductsByQuery(req, res, next) {
     const products = await searchItemsByTitle(req.query.searchQuery);
     res.json(products);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: "An error occurred" });
   }
 }
 
@@ -114,8 +114,7 @@ async function getSelectedProductsById(req, res, next) {
     const products = await getSelectedProductsByIdSQL(req.body.productsIds);
     res.json(products);
   } catch (error) {
-    console.log(error);
-    res.sendStatus(500);
+    res.status(500).json({ error: "An error occurred" });
   }
 }
 

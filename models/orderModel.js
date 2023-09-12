@@ -72,4 +72,40 @@ async function addOrderItems(orderId, orderData) {
   }
 }
 
-module.exports = createNewOrder;
+const getOrderWithItems = async (orderId) => {
+  try {
+    const queryText = `
+    SELECT o.id AS order_id, o.order_date, o.total_price, oi.item_id, oi.quantity, oi.item_price, i.title AS item_title
+    FROM orders o
+    LEFT JOIN orders_items oi ON o.id = oi.order_id
+    LEFT JOIN items i ON oi.item_id = i.id
+    WHERE o.id = ?
+  `;
+
+    const result = await query(queryText, [orderId]);
+
+    if (result.length === 0) {
+      throw new Error("Order was not found");
+    }
+
+    const orderWithItems = {
+      order: {
+        order_id: result[0].order_id,
+        order_date: result[0].order_date,
+        order_total: parseInt(result[0].total_price),
+      },
+      items: result.map((row) => ({
+        item_id: row.item_id,
+        quantity: row.quantity,
+        price: parseInt(row.item_price),
+        title: row.item_title,
+      })),
+    };
+
+    return orderWithItems;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { createNewOrder, getOrderWithItems };
