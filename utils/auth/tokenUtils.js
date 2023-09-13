@@ -29,20 +29,24 @@ async function saveRefreshToken(refreshToken, userId) {
 }
 
 async function clearRefreshToken(refreshToken) {
-  connection.query(
-    "DELETE FROM refresh_tokens WHERE token = ?",
-    [refreshToken],
-    (error, results) => {
-      if (error) {
-        throw error;
+  try {
+    connection.query(
+      "DELETE FROM refresh_tokens WHERE token = ?",
+      [refreshToken],
+      (error, results) => {
+        if (error) {
+          throw error;
+        }
+        if (results.affectedRows === 1) {
+          return "Refresh token cleared";
+        } else {
+          throw new Error("Failed to clear refresh token");
+        }
       }
-      if (results.affectedRows === 1) {
-        return "Refresh token cleared";
-      } else {
-        throw new Error("Failed to clear refresh token");
-      }
-    }
-  );
+    );
+  } catch (error) {
+    throw error;
+  }
 }
 
 function verifyToken(token) {

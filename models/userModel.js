@@ -9,7 +9,41 @@ const { UserNotFoundError } = require("../utils/auth/customErrors");
 const util = require("util");
 const query = util.promisify(connection.query).bind(connection);
 
-async function getUser(email, password, res) {
+const userExists = async (email) => {
+  try {
+    const checkUserQuery = "SELECT 1 FROM users WHERE email = ?";
+    const existingUser = await query(checkUserQuery, [email]);
+    if (existingUser.length > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const addNewUser = async (email, password, name) => {
+  try {
+    const existingUser = await userExists(email);
+    if (existingUser) {
+      throw new Error("User already exists");
+    }
+    const insertUserQuery =
+      "INSERT INTO users (email, name, password) VALUES (?, ?, ?)";
+    const result = await query(insertUserQuery, [email, name, password]);
+
+    if (result.affectedRows === 1) {
+      return true;
+    } else {
+      throw new Error("User creation failed");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getUser = async (email, password, res) => {
   try {
     const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
     const results = await query(queryText, [email, password]);
@@ -19,7 +53,6 @@ async function getUser(email, password, res) {
     }
 
     const userData = results[0];
-    // const openData = JSON.stringify(userData.email);
     const openData = JSON.stringify({ id: userData.id, name: userData.name });
 
     const accessToken = generateAccessToken(userData.email);
@@ -47,9 +80,9 @@ async function getUser(email, password, res) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function resetMsg(email) {
+const resetMsg = async (email) => {
   try {
     const queryText = `SELECT * FROM users WHERE email = ?`;
     const results = await query(queryText, [email]);
@@ -57,66 +90,55 @@ async function resetMsg(email) {
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
     }
-
     const userData = results[0];
-    if (userData) {
-      const resetToken = generateAccessToken(email);
-      return resetToken;
-    } else {
-      throw new Error("No user data");
+    if (!userData) {
+      throw new Error("User data hasn't been retrieved");
     }
+    const resetToken = generateAccessToken(email);
+    return resetToken;
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function resetPassword(resetToken, newPassword) {
+const resetPassword = async (resetToken, newPassword) => {
   try {
     const tokenData = await verifyToken(resetToken).sub;
-    if (tokenData) {
-      const queryText = `SELECT * FROM users WHERE email = ?`;
-      const results = await query(queryText, [tokenData]);
-
-      if (results.length === 0) {
-        throw new UserNotFoundError("No user found");
-      }
-
-      const userData = results[0];
-      const updateQuery = `UPDATE users SET password = ? WHERE id = ?`;
-      const updateResults = await query(updateQuery, [
-        newPassword,
-        userData.id,
-      ]);
-
-      if (updateResults.affectedRows === 1) {
-        return { email: userData.email, newPassword };
-      } else {
-        throw new Error("Problem with updating results");
-      }
-    } else {
+    if (!tokenData) {
       throw new Error("Token verification failed");
     }
-  } catch (error) {
-    console.error("Error updating password:", error);
-    throw error;
-  }
-}
-
-async function getUserData(email) {
-  try {
     const queryText = `SELECT * FROM users WHERE email = ?`;
-    const results = await query(queryText, [email]);
+    const results = await query(queryText, [tokenData]);
 
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
     }
+    const userData = results[0];
+    const updateQuery = `UPDATE users SET password = ? WHERE id = ?`;
 
-    return results;
+    const updateResults = await query(updateQuery, [newPassword, userData.id]);
+    if (updateResults.affectedRows === 1) {
+      return { email: userData.email, newPassword };
+    } else {
+      throw new Error("Problem with updating results");
+    }
   } catch (error) {
-    console.error("Error fetching user:", error);
     throw error;
   }
-}
+};
+
+const getUserData = async (email) => {
+  try {
+    const queryText = `SELECT * FROM users WHERE email = ?`;
+    const results = await query(queryText, [email]);
+    if (results.length === 0) {
+      throw new UserNotFoundError("No user found");
+    }
+    return results;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const addItemToWishList = async (userId, productId) => {
   try {
@@ -156,6 +178,39 @@ const getUserWishListSQL = async (userId) => {
   }
 };
 
+const getUserOrderHistorySQL = async (userId) => {
+  try {
+    const queryText = `
+    SELECT order_date, id
+    FROM orders
+    WHERE user_id = ?
+    ORDER BY order_date DESC
+  `;
+    const result = await query(queryText, [userId]);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getOrderForEmail = async (userEmail, orderId) => {
+  try {
+    const queryText = `
+        SELECT 1
+        FROM users u
+        INNER JOIN orders o ON u.id = o.user_id
+        WHERE u.email = ? AND o.id = ?
+      `;
+    const result = await query(queryText, [userEmail, orderId]);
+    if (result.length === 0) {
+      throw new Error("No order for given email and id");
+    }
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getUser,
   resetMsg,
@@ -164,4 +219,8 @@ module.exports = {
   getUserWishListSQL,
   deleteItemFromWishlist,
   addItemToWishList,
+  userExists,
+  addNewUser,
+  getOrderForEmail,
+  getUserOrderHistorySQL,
 };

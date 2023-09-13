@@ -9,6 +9,8 @@ const {
   authUser,
   manageUserWishlist,
   getUsersWishList,
+  resetUserPasswordMsg,
+  getUsersOrderHistory
 } = require("../../controllers/userController");
 const {
   verifyTokenAndSession,
@@ -21,10 +23,13 @@ router.post("/register", registerUser);
 // router.get("/token")
 // auth/resetpass/:token
 router.post("/passReset", resetUserPassword);
+router.post("/passResetToken", resetUserPasswordMsg)
 router.post("/login", loginUser);
 router.get("/profile", verifyTokenAndSession, getUserProfile);
 router.post("/wishlist", verifyTokenAndSession, manageUserWishlist);
 router.get("/wishlist", verifyTokenAndSession, getUsersWishList);
+router.get("/order-gistory", verifyTokenAndSession, getUsersOrderHistory);
+
 
 // middleware routes
 router.get("/order", verifyTokenAndSession);
