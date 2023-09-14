@@ -11,20 +11,25 @@ const {
   deleteGuestCartItem,
 } = require("../utils/cart/guestCartOperations");
 
-async function getCart(req, res, next) {
+const getCart = async (req, res) => {
   try {
-    if (req.decodedToken) {
-      const id = await getCartId(req.decodedToken);
-      if (id) {
-        const contents = await getCartContents(id);
-        req.session.cart = contents;
-        req.session.cartId = id;
-        res.json({ cartId: id, contents: contents });
+    const userEmail = req.decodedToken;
+    if (userEmail) {
+      let cartId = req.session.cartId;
+      if (cartId) {
+        const contents = await getCartContents(cartId);
+        res.json({ contents: contents });
       } else {
-        const newCartId = await createCartForUser(req.body.email);
-        req.session.cart = [];
-        req.session.cartId = newCartId;
-        res.json({ cartId: newCartId, contents: [] });
+        cartId = await getCartId(userEmail);
+        if (cartId) {
+          const contents = await getCartContents(cartId);
+          req.session.cartId = cartId;
+          res.json({ contents: contents });
+        } else {
+          cartId = await createCartForUser(userEmail);
+          req.session.cartId = cartId;
+          res.json({ contents: [] });
+        }
       }
     } else if (req.session.cart) {
       res.json({ contents: req.session.cart });
@@ -35,80 +40,122 @@ async function getCart(req, res, next) {
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function addCartItem(req, res, next) {
+const addCartItem = async (req, res) => {
   try {
-    if (req.query.id) {
-      if (req.session.user && req.session.cart) {
-        await increaseCartItem(req.session.cartId, req.query.id);
-        res.sendStatus(200);
-      } else if (req.session.user && !req.session.cart) {
-        const newCartId = await createCartForUser(req.session.user.email);
-        await increaseCartItem(newCartId, req.query.id);
-        res.sendStatus(200);
-      } else if (req.session.cart) {
-        const updatedCart = addItemGuestCart(req.query.id, req.session.cart);
-        req.session.cart = updatedCart;
-        req.session.touch();
-        res.json({ contents: req.session.cart });
-      } else {
-        const updatedCart = addItemGuestCart(req.query.id, []);
-        req.session.cart = updatedCart;
-        req.session.touch();
-        res.json({ contents: req.session.cart });
-      }
-    } else {
+    const productId = req.query.id;
+    if (!productId) {
       throw new Error("No product id was provided");
     }
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-}
-
-async function deleteCartItem(req, res, next) {
-  try {
-    ``;
-    if (req.query.id) {
-      if (req.decodedToken) {
-        if (req.session.cart && req.session.cartId) {
-          await decreaseCartItem(req.session.cartId, req.query.id);
+    const userEmail = req.decodedToken;
+    if (userEmail) {
+      let cartId = req.session.cartId;
+      if (cartId) {
+        await increaseCartItem(cartId, productId);
+        res.sendStatus(200);
+      } else {
+        cartId = await getCartId(userEmail);
+        if (cartId) {
+          await increaseCartItem(cartId, productId);
+          req.session.cartId = cartId;
           res.sendStatus(200);
-        } else if (req.session.user && !req.session.cart) {
-          const newCartId = await createCartForUser(req.session.user.email);
-          await increaseCartItem(newCartId, req.query.id);
+        } else {
+          cartId = await createCartForUser(userEmail);
+          await increaseCartItem(cartId, productId);
+          req.session.cartId = cartId;
           res.sendStatus(200);
         }
-      } else if (req.session.cart) {
-        const updatedCart = deleteGuestCartItem(req.query.id, req.session.cart);
-        req.session.cart = updatedCart;
-        req.session.touch();
-        res.json({ contents: req.session.cart });
-      } else {
-        const updatedCart = deleteGuestCartItem(req.query.id, []);
-        req.session.cart = updatedCart;
-        req.session.touch();
-        res.json({ contents: req.session.cart });
       }
     } else {
+      req.session.touch();
+      const cart = req.session.cart;
+      if (cart) {
+        const updatedCart = addItemGuestCart(productId, cart);
+        req.session.cart = updatedCart;
+        res.json({ contents: updatedCart });
+      } else {
+        const updatedCart = addItemGuestCart(productId, []);
+        req.session.cart = updatedCart;
+        res.json({ contents: updatedCart });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+const deleteCartItem = async (req, res) => {
+  try {
+    const productId = req.query.id;
+    if (!productId) {
       throw new Error("No product id was provided");
     }
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-}
-
-async function getCartPriceWeight(req, res, next) {
-  try {
-    if (req.session.cart) {
-      const { totalSum, totalWeight } = await calcCartInfo(req.session.cart);
-      res.json({ info: { totalSum, totalWeight } });
+    const userEmail = req.decodedToken;
+    if (userEmail) {
+      let cartId = req.session.cartId;
+      if (cartId) {
+        await decreaseCartItem(cartId, productId);
+        res.sendStatus(200);
+      } else {
+        cartId = await getCartId(userEmail);
+        if (cartId) {
+          await decreaseCartItem(cartId, productId);
+          req.session.cartId = cartId;
+          res.sendStatus(200);
+        } else {
+          cartId = await createCartForUser(userEmail);
+          req.session.cartId = cartId;
+          res.sendStatus(400);
+        }
+      }
     } else {
-      throw new Error("No session cart was provided");
+      req.session.touch();
+      const cart = req.session.cart;
+      if (cart) {
+        const updatedCart = deleteGuestCartItem(productId, cart);
+        req.session.cart = updatedCart;
+        res.json({ contents: updatedCart });
+      } else {
+        req.session.cart = [];
+        res.sendStatus(400);
+      }
     }
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
+
+const getCartPriceWeight = async (req, res) => {
+  try {
+    const userEmail = req.decodedToken;
+    if (userEmail) {
+      let cartId = req.session.cartId;
+      if (cartId) {
+        const cart = await getCartContents(cartId);
+        const { totalSum, totalWeight } = await calcCartInfo(cart);
+        res.json({ info: { totalSum, totalWeight } });
+      } else {
+        cartId = getCartId(userEmail);
+        if (!cartId) {
+          cartId = createCartForUser(userEmail);
+          req.session.cartId = cartId;
+          res.json({ info: { totalSum: 0, totalWeight: 0 } });
+        }
+      }
+    } else {
+      const cart = req.session.cart;
+      if (!cart) {
+        req.session.cart = [];
+        res.json({ info: { totalSum: 0, totalWeight: 0 } });
+      } else {
+        const { totalSum, totalWeight } = await calcCartInfo(cart);
+        res.json({ info: { totalSum, totalWeight } });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
 
 module.exports = { getCart, addCartItem, deleteCartItem, getCartPriceWeight };

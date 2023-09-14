@@ -1,21 +1,22 @@
 const dotenv = require("dotenv").config({ path: "./secret.env" });
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
-var session = require("express-session");
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
+const session = require("express-session");
 const MemoryStore = require("memorystore")(session);
 
 // Cors handling
-var cors = require("cors");
-var corsOptions = {
+const cors = require("cors");
+const corsOptions = {
   origin: ["http://localhost:3000"],
-  methods: ["POST", "GET"],
+  methods: ["POST", "GET", "PUT", "DELETE"],
   credentials: true,
 };
 
-var app = express();
+const app = express();
+
 app.use(cors(corsOptions));
 
 // Middleware

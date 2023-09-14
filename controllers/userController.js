@@ -55,7 +55,7 @@ const logOutUser = async (req, res) => {
     res.clearCookie("accessToken");
     res.clearCookie("openData");
     res.clearCookie("refreshToken");
-    res.clearCookie("connect.sid"); // session destroy
+    res.clearCookie("connect.sid");
     res.clearCookie("wishlist");
     res.sendStatus(200);
   } catch (error) {

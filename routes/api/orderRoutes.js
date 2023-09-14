@@ -8,7 +8,7 @@ const {
   getOrderById,
 } = require("../../controllers/orderController");
 
-router.post("/new", verifyTokenAndSession, createOrderController);
-router.post("/orderinfo", getOrderById);
+router.post("/", verifyTokenAndSession, createOrderController);
+router.get("/info", verifyTokenAndSession, getOrderById);
 
 module.exports = router;

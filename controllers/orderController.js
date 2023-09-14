@@ -1,6 +1,6 @@
 const { createNewOrder, getOrderWithItems } = require("../models/orderModel");
 
-async function createOrderController(req, res, next) {
+const createOrderController = async (req, res) => {
   try {
     const orderCartData = req.body;
     const userEmail = req.decodedToken;
@@ -22,9 +22,9 @@ async function createOrderController(req, res, next) {
   }
 }
 
-const getOrderById = async (req, res, next) => {
+const getOrderById = async (req, res) => {
   try {
-    const orderId = req.body.id;
+    const orderId = req.query.id;
     if (!orderId) {
       throw new Error("Missing required data");
     }

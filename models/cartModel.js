@@ -13,29 +13,37 @@ const increaseCartItemQuery = `
   VALUES (?, ?, 1)
   ON DUPLICATE KEY UPDATE item_quantity = item_quantity + 1;
   `;
-
 const getItemQuantityQuery = `
   SELECT i.quantity AS item_quantity, cc.item_quantity AS cart_quantity
   FROM items AS i
   LEFT JOIN cart_contents AS cc ON i.id = cc.item_id AND cc.cart_id = ?
   WHERE i.id = ?;
   `;
-
 const decreaseCartItemQuery = `
   UPDATE cart_contents
   SET item_quantity = item_quantity - 1
   WHERE cart_id = ? AND item_id = ? AND item_quantity > 1;
   `;
-
 const deleteCartItemQuery = `
   DELETE FROM cart_contents
   WHERE cart_id = ? AND item_id = ?;
   `;
+const getCartContentsQuery = "SELECT * FROM cart_contents WHERE cart_id = ?";
+const getItemInfoQuery = `
+        SELECT weight, (price - discount) AS discounted_price
+        FROM items
+        WHERE id = ?;
+      `;
+const createCartQuery = `
+      INSERT INTO carts (user_id, cart_expiration_date)
+      SELECT u.id, DATE_ADD(NOW(), INTERVAL 7 DAY)
+      FROM users u
+      WHERE u.email = ?;
+    `;
 
-async function getCartId(email) {
+const getCartId = async (email) => {
   try {
     const results = await query(getCartIdQuery, [email]);
-
     if (results.length > 0) {
       const cartId = results[0].cart_id;
       return cartId;
@@ -43,15 +51,13 @@ async function getCartId(email) {
       throw new Error("Error getting cart");
     }
   } catch (error) {
-    console.error("Error getting cart:", error);
     throw error;
   }
-}
+};
 
-async function getItemInfo(cartId, itemId) {
+const getItemInfo = async (cartId, itemId) => {
   try {
     const results = await query(getItemQuantityQuery, [cartId, itemId]);
-
     if (results.length > 0) {
       return results;
     } else {
@@ -60,9 +66,9 @@ async function getItemInfo(cartId, itemId) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function increCartItemQuantity(cartId, itemId) {
+const increCartItemQuantity = async (cartId, itemId) => {
   try {
     const results = await query(increaseCartItemQuery, [cartId, itemId]);
 
@@ -74,9 +80,9 @@ async function increCartItemQuantity(cartId, itemId) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function increaseCartItem(cartId, itemId) {
+const increaseCartItem = async (cartId, itemId) => {
   try {
     const [itemInfo] = await getItemInfo(cartId, itemId);
     if (!itemInfo || itemInfo.item_quantity === 0) {
@@ -87,8 +93,8 @@ async function increaseCartItem(cartId, itemId) {
     const currentQuantityInCart = itemInfo.cart_quantity || 0;
 
     if (currentQuantityInCart < itemQuantityInItemsTable) {
-      const results = await increCartItemQuantity(cartId, itemId);
-      return { msg: "Item quantity increased in the cart.", results: results };
+      await increCartItemQuantity(cartId, itemId);
+      return true;
     } else {
       throw new Error(
         "Item quantity in cart cannot exceed the available quantity."
@@ -97,9 +103,9 @@ async function increaseCartItem(cartId, itemId) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function decreaseCartItemSQL(cartId, itemId) {
+const decreaseCartItemSQL = async (cartId, itemId) => {
   try {
     const results = await query(decreaseCartItemQuery, [cartId, itemId]);
 
@@ -111,9 +117,9 @@ async function decreaseCartItemSQL(cartId, itemId) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function deleteCartItem(cartId, itemId) {
+const deleteCartItem = async (cartId, itemId) => {
   try {
     const results = await query(deleteCartItemQuery, [cartId, itemId]);
 
@@ -125,47 +131,38 @@ async function deleteCartItem(cartId, itemId) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function decreaseCartItem(cartId, itemId) {
+const decreaseCartItem = async (cartId, itemId) => {
   try {
     const resultsDecr = await decreaseCartItemSQL(cartId, itemId);
     if (resultsDecr.affectedRows === 0) {
-      const results = await deleteCartItem(cartId, itemId);
-      return { msg: "Item removed from the cart.", results };
+      await deleteCartItem(cartId, itemId);
+      return true;
     } else {
       return "Item quantity decreased in the cart.";
     }
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function getCartContents(cartId) {
+const getCartContents = async (cartId) => {
   try {
-    const results = await query(
-      "SELECT * FROM cart_contents WHERE cart_id = ?",
-      [cartId]
-    );
+    const results = await query(getCartContentsQuery, [cartId]);
     return results;
   } catch (error) {
-    console.error("Error fetching cart contents:", error);
     throw error;
   }
-}
+};
 
-async function calcCartInfo(cartItems) {
+const calcCartInfo = async (cartItems) => {
   try {
     let totalSum = 0;
     let totalWeight = 0;
 
     for (const cartItem of cartItems) {
       const { item_id, item_quantity } = cartItem;
-      const getItemInfoQuery = `
-        SELECT weight, (price - discount) AS discounted_price
-        FROM items
-        WHERE id = ?;
-      `;
 
       const itemInfo = await query(getItemInfoQuery, [item_id]);
 
@@ -180,26 +177,10 @@ async function calcCartInfo(cartItems) {
   } catch (error) {
     throw error;
   }
-}
+};
 
-async function executeQuery(queryStr, params) {
+const createCartForUser = async (email) => {
   try {
-    const results = await query(queryStr, params);
-    return results;
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function createCartForUser(email) {
-  try {
-    const createCartQuery = `
-      INSERT INTO carts (user_id, cart_expiration_date)
-      SELECT u.id, DATE_ADD(NOW(), INTERVAL 7 DAY)
-      FROM users u
-      WHERE u.email = ?;
-    `;
-
     const results = await query(createCartQuery, [email]);
 
     if (results.affectedRows === 1) {
@@ -210,12 +191,11 @@ async function createCartForUser(email) {
   } catch (error) {
     throw error;
   }
-}
+};
 
 module.exports = {
   getCartId,
   getItemInfo,
-  increCartItemQuantity,
   increaseCartItem,
   decreaseCartItem,
   getCartContents,
