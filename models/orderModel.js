@@ -3,7 +3,23 @@ const { calcCartInfo } = require("./cartModel");
 const util = require("util");
 const query = util.promisify(connection.query).bind(connection);
 
-async function createNewOrder(orderData, userEmail) {
+const createOrderQuery = `
+INSERT INTO orders (user_id, order_date, total_price, status, is_paid, total_weight)
+SELECT id, NOW(), ?, 'CR', false, ? FROM users WHERE email = ?
+`;
+const insertItemsQuery = `
+INSERT INTO orders_items (order_id, item_id, quantity)
+VALUES ?
+`;
+const queryText = `
+SELECT o.id AS order_id, o.order_date, o.total_price, oi.item_id, oi.quantity, oi.item_price, i.title AS item_title
+FROM orders o
+LEFT JOIN orders_items oi ON o.id = oi.order_id
+LEFT JOIN items i ON oi.item_id = i.id
+WHERE o.id = ?
+`;
+
+const createNewOrder = async (orderData, userEmail) => {
   // Getting total price and total weight of the items
   const { totalSum, totalWeight } = await calcCartInfo(
     Object.values(orderData)
@@ -24,13 +40,8 @@ async function createNewOrder(orderData, userEmail) {
   return orderId;
 }
 
-async function createOrder(email, totalPrice, totalWeight) {
+const createOrder = async (email, totalPrice, totalWeight) => {
   try {
-    const createOrderQuery = `
-      INSERT INTO orders (user_id, order_date, total_price, status, is_paid, total_weight)
-      SELECT id, NOW(), ?, 'CR', false, ? FROM users WHERE email = ?
-    `;
-
     const result = await query(createOrderQuery, [
       totalPrice,
       totalWeight,
@@ -39,18 +50,12 @@ async function createOrder(email, totalPrice, totalWeight) {
 
     return result.insertId;
   } catch (error) {
-    console.error("Error creating order:", error);
     throw error;
   }
 }
 
-async function addOrderItems(orderId, orderData) {
+const addOrderItems = async (orderId, orderData) => {
   try {
-    const insertItemsQuery = `
-      INSERT INTO orders_items (order_id, item_id, quantity)
-      VALUES ?
-    `;
-
     const values = [];
 
     for (const key in orderData) {
@@ -74,14 +79,6 @@ async function addOrderItems(orderId, orderData) {
 
 const getOrderWithItems = async (orderId) => {
   try {
-    const queryText = `
-    SELECT o.id AS order_id, o.order_date, o.total_price, oi.item_id, oi.quantity, oi.item_price, i.title AS item_title
-    FROM orders o
-    LEFT JOIN orders_items oi ON o.id = oi.order_id
-    LEFT JOIN items i ON oi.item_id = i.id
-    WHERE o.id = ?
-  `;
-
     const result = await query(queryText, [orderId]);
 
     if (result.length === 0) {

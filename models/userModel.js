@@ -9,9 +9,32 @@ const { UserNotFoundError } = require("../utils/auth/customErrors");
 const util = require("util");
 const query = util.promisify(connection.query).bind(connection);
 
+const checkUserQuery = "SELECT 1 FROM users WHERE email = ?";
+const insertUserQuery =
+  "INSERT INTO users (email, name, password) VALUES (?, ?, ?)";
+const getUserQuery = `SELECT * FROM users WHERE email = ? AND password = ?`;
+const getUserByEmailQuery = `SELECT * FROM users WHERE email = ?`;
+const updateQuery = `UPDATE users SET password = ? WHERE id = ?`;
+const addToWishlistQuery =
+  "INSERT IGNORE INTO wishlist (user_id, item_id) VALUES (?, ?)";
+const deleteFromWishlistQuery =
+  "DELETE FROM wishlist WHERE user_id = ? AND item_id = ?";
+const getWishlistQuery = "SELECT item_id FROM wishlist WHERE user_id = ?";
+const getOrderHistoryQuery = `
+    SELECT order_date, id
+    FROM orders
+    WHERE user_id = ?
+    ORDER BY order_date DESC
+  `;
+const getOrderByEmailAndIdQuery = `
+  SELECT 1
+  FROM users u
+  INNER JOIN orders o ON u.id = o.user_id
+  WHERE u.email = ? AND o.id = ?
+`;
+
 const userExists = async (email) => {
   try {
-    const checkUserQuery = "SELECT 1 FROM users WHERE email = ?";
     const existingUser = await query(checkUserQuery, [email]);
     if (existingUser.length > 0) {
       return true;
@@ -29,10 +52,8 @@ const addNewUser = async (email, password, name) => {
     if (existingUser) {
       throw new Error("User already exists");
     }
-    const insertUserQuery =
-      "INSERT INTO users (email, name, password) VALUES (?, ?, ?)";
-    const result = await query(insertUserQuery, [email, name, password]);
 
+    const result = await query(insertUserQuery, [email, name, password]);
     if (result.affectedRows === 1) {
       return true;
     } else {
@@ -45,8 +66,7 @@ const addNewUser = async (email, password, name) => {
 
 const getUser = async (email, password, res) => {
   try {
-    const queryText = `SELECT * FROM users WHERE email = ? AND password = ?`;
-    const results = await query(queryText, [email, password]);
+    const results = await query(getUserQuery, [email, password]);
 
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
@@ -84,8 +104,7 @@ const getUser = async (email, password, res) => {
 
 const resetMsg = async (email) => {
   try {
-    const queryText = `SELECT * FROM users WHERE email = ?`;
-    const results = await query(queryText, [email]);
+    const results = await query(getUserByEmailQuery, [email]);
 
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
@@ -107,14 +126,12 @@ const resetPassword = async (resetToken, newPassword) => {
     if (!tokenData) {
       throw new Error("Token verification failed");
     }
-    const queryText = `SELECT * FROM users WHERE email = ?`;
-    const results = await query(queryText, [tokenData]);
+    const results = await query(getUserByEmailQuery, [tokenData]);
 
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
     }
     const userData = results[0];
-    const updateQuery = `UPDATE users SET password = ? WHERE id = ?`;
 
     const updateResults = await query(updateQuery, [newPassword, userData.id]);
     if (updateResults.affectedRows === 1) {
@@ -129,8 +146,7 @@ const resetPassword = async (resetToken, newPassword) => {
 
 const getUserData = async (email) => {
   try {
-    const queryText = `SELECT * FROM users WHERE email = ?`;
-    const results = await query(queryText, [email]);
+    const results = await query(getUserByEmailQuery, [email]);
     if (results.length === 0) {
       throw new UserNotFoundError("No user found");
     }
@@ -142,9 +158,7 @@ const getUserData = async (email) => {
 
 const addItemToWishList = async (userId, productId) => {
   try {
-    const addQueryText =
-      "INSERT IGNORE INTO wishlist (user_id, item_id) VALUES (?, ?)";
-    const result = await query(addQueryText, [userId, productId]);
+    const result = await query(addToWishlistQuery, [userId, productId]);
     if (result.affectedRows === 0) {
       throw new Error("Item is already in the wishlist.");
     }
@@ -156,9 +170,7 @@ const addItemToWishList = async (userId, productId) => {
 
 const deleteItemFromWishlist = async (userId, productId) => {
   try {
-    const deleteQueryText =
-      "DELETE FROM wishlist WHERE user_id = ? AND item_id = ?";
-    const result = await query(deleteQueryText, [userId, productId]);
+    const result = await query(deleteFromWishlistQuery, [userId, productId]);
     if (result.affectedRows === 0) {
       throw new Error("Item was not found in the wishlist");
     }
@@ -170,8 +182,7 @@ const deleteItemFromWishlist = async (userId, productId) => {
 
 const getUserWishListSQL = async (userId) => {
   try {
-    const queryText = "SELECT item_id FROM wishlist WHERE user_id = ?";
-    const result = await query(queryText, [userId]);
+    const result = await query(getWishlistQuery, [userId]);
     return result.map((row) => row.item_id);
   } catch (error) {
     throw error;
@@ -180,13 +191,7 @@ const getUserWishListSQL = async (userId) => {
 
 const getUserOrderHistorySQL = async (userId) => {
   try {
-    const queryText = `
-    SELECT order_date, id
-    FROM orders
-    WHERE user_id = ?
-    ORDER BY order_date DESC
-  `;
-    const result = await query(queryText, [userId]);
+    const result = await query(getOrderHistoryQuery, [userId]);
     return result;
   } catch (error) {
     throw error;
@@ -195,13 +200,7 @@ const getUserOrderHistorySQL = async (userId) => {
 
 const getOrderForEmail = async (userEmail, orderId) => {
   try {
-    const queryText = `
-        SELECT 1
-        FROM users u
-        INNER JOIN orders o ON u.id = o.user_id
-        WHERE u.email = ? AND o.id = ?
-      `;
-    const result = await query(queryText, [userEmail, orderId]);
+    const result = await query(getOrderByEmailAndIdQuery, [userEmail, orderId]);
     if (result.length === 0) {
       throw new Error("No order for given email and id");
     }

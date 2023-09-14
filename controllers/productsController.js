@@ -1,26 +1,23 @@
 const {
   getProductData,
-  getAllProducts,
   getImgByProductId,
   getCategoriesList,
-  getProductsByCategory,
-  getProductsSortedSQL,
-  searchItemsByTitle,
   getMinMaxPricesByCategory,
   getSelectedProductsByIdSQL,
+  getProductsSQL,
 } = require("../models/productsModel");
 const path = require("path");
 
-async function getAllProductsController(req, res, next) {
+const getProducts = async (req, res) => {
   try {
-    const products = await getAllProducts();
+    const products = await getProductsSQL(req.query);
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function getProductById(req, res, next) {
+const getProductById = async (req, res) => {
   try {
     const id = req.query.id;
     if (id !== undefined) {
@@ -36,9 +33,9 @@ async function getProductById(req, res, next) {
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function getProductImgById(req, res, next) {
+const getProductImgById = async (req, res) => {
   try {
     if (!req.query.id) {
       throw new Error("No product id was provided");
@@ -55,58 +52,27 @@ async function getProductImgById(req, res, next) {
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function getCategories(req, res, next) {
+const getCategories = async (req, res) => {
   try {
     const categories = await getCategoriesList();
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function getProductByCategoryController(req, res, next) {
-  try {
-    const category = req.query.category;
-    const products = await getProductsByCategory(category);
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-}
-
-async function getProductsSorted(req, res, next) {
-  try {
-    const products = await getProductsSortedSQL(req.query);
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-}
-
-async function getPricesRange(req, res, next) {
+const getPricesRange = async (req, res) => {
   try {
     const prices = await getMinMaxPricesByCategory(req.query.category);
     res.json(prices);
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
-async function searchProductsByQuery(req, res, next) {
-  try {
-    if (!req.query.searchQuery) {
-      throw new Error("No search query");
-    }
-    const products = await searchItemsByTitle(req.query.searchQuery);
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-}
-
-async function getSelectedProductsById(req, res, next) {
+const getSelectedProductsById = async (req, res) => {
   try {
     if (!req.body.productsIds) {
       throw new Error("No ids were provided");
@@ -116,16 +82,13 @@ async function getSelectedProductsById(req, res, next) {
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
 module.exports = {
   getPricesRange,
-  getProductsSorted,
   getProductById,
-  getAllProductsController,
   getProductImgById,
   getCategories,
-  getProductByCategoryController,
-  searchProductsByQuery,
   getSelectedProductsById,
+  getProducts,
 };
