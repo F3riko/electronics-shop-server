@@ -1,4 +1,9 @@
-const { createNewOrder, getOrderWithItems } = require("../models/orderModel");
+const {
+  createNewOrder,
+  getOrderWithItems,
+  getPickUpAddresses,
+  processOrderPaymentSQL,
+} = require("../models/orderModel");
 
 const createOrderController = async (req, res) => {
   try {
@@ -20,7 +25,7 @@ const createOrderController = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
-}
+};
 
 const getOrderById = async (req, res) => {
   try {
@@ -38,4 +43,34 @@ const getOrderById = async (req, res) => {
   }
 };
 
-module.exports = { createOrderController, getOrderById };
+const getSelfpickUpAddresses = async (req, res) => {
+  try {
+    const addresses = await getPickUpAddresses();
+    if (!addresses) {
+      throw new Error("No addresses data was retrieved");
+    }
+    res.json(addresses);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+const processOrderPayment = async (req, res) => {
+  try {
+    const { userId, orderId, paymentId, addressId, deliveryMethod } = req.body;
+    if (!userId || !orderId || !paymentId || !addressId || !deliveryMethod) {
+      throw new Error("Missing required data");
+    }
+    await processOrderPaymentSQL(userId, orderId, paymentId, addressId, deliveryMethod)
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+module.exports = {
+  createOrderController,
+  getOrderById,
+  getSelfpickUpAddresses,
+  processOrderPayment,
+};

@@ -5,6 +5,7 @@ const {
   calcCartInfo,
   createCartForUser,
   getCartId,
+  clearCartSQL,
 } = require("../models/cartModel");
 const {
   addItemGuestCart,
@@ -44,6 +45,7 @@ const getCart = async (req, res) => {
 
 const addCartItem = async (req, res) => {
   try {
+    console.log("session in add function", req.session);
     const productId = req.query.id;
     if (!productId) {
       throw new Error("No product id was provided");
@@ -158,4 +160,23 @@ const getCartPriceWeight = async (req, res) => {
   }
 };
 
-module.exports = { getCart, addCartItem, deleteCartItem, getCartPriceWeight };
+const clearCart = async (req, res) => {
+  try {
+    const cartId = req.session.cartId;
+    if (!cartId) {
+      throw new Error("Required data is missing");
+    }
+    await clearCartSQL(cartId);
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+module.exports = {
+  getCart,
+  addCartItem,
+  deleteCartItem,
+  getCartPriceWeight,
+  clearCart,
+};
