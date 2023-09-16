@@ -27,11 +27,14 @@ const getOrderHistoryQuery = `
     ORDER BY order_date DESC
   `;
 const getOrderByEmailAndIdQuery = `
-  SELECT 1
-  FROM users u
-  INNER JOIN orders o ON u.id = o.user_id
-  WHERE u.email = ? AND o.id = ?
+SELECT 1
+FROM orders o
+INNER JOIN users u ON u.id = o.user_id
+WHERE u.email = ? AND o.id = ? AND o.status = "CR";
 `;
+const addNewAddressQuery =
+  "INSERT INTO addresses (name, surname, email, phone, zip, city, street, address, additional_info, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+const getUserAddressesQuery = "SELECT * FROM addresses WHERE user_id = ?";
 
 const userExists = async (email) => {
   try {
@@ -202,9 +205,43 @@ const getOrderForEmail = async (userEmail, orderId) => {
   try {
     const result = await query(getOrderByEmailAndIdQuery, [userEmail, orderId]);
     if (result.length === 0) {
-      throw new Error("No order for given email and id");
+      throw new Error("Order info doesn't match or order was paid");
     }
-    return true;
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const addNewAddressSQL = async (userId, addressObj) => {
+  try {
+    const result = await query(addNewAddressQuery, [
+      addressObj.name,
+      addressObj.surname,
+      addressObj.email,
+      addressObj.phone,
+      addressObj.zip,
+      addressObj.city,
+      addressObj.street,
+      addressObj.address,
+      addressObj.additionalInfo,
+      userId,
+    ]);
+
+    if (result.affectedRows === 1) {
+      return true;
+    } else {
+      throw new Error("Error adding new address");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getUserAddresses = async (userId) => {
+  try {
+    const addresses = await query(getUserAddressesQuery, [userId]);
+    return addresses;
   } catch (error) {
     throw error;
   }
@@ -222,4 +259,6 @@ module.exports = {
   addNewUser,
   getOrderForEmail,
   getUserOrderHistorySQL,
+  addNewAddressSQL,
+  getUserAddresses,
 };

@@ -40,6 +40,7 @@ const createCartQuery = `
       FROM users u
       WHERE u.email = ?;
     `;
+const clearCartQuery = "DELETE FROM cart_contents WHERE cart_id = ?";
 
 const getCartId = async (email) => {
   try {
@@ -193,6 +194,16 @@ const createCartForUser = async (email) => {
   }
 };
 
+const clearCartSQL = async (cartId) => {
+  try {
+    const clearCartQuery = "DELETE FROM cart_contents WHERE cart_id = ?";
+    await query(clearCartQuery, [cartId]);
+    return;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getCartId,
   getItemInfo,
@@ -201,4 +212,5 @@ module.exports = {
   getCartContents,
   calcCartInfo,
   createCartForUser,
+  clearCartSQL,
 };

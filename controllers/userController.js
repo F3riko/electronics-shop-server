@@ -122,21 +122,14 @@ const getUserProfile = async (req, res) => {
 const authOrderAccess = async (req, res) => {
   try {
     const orderId = req.query.orderId;
-    const email = req.decodedToken;
     if (!orderId) {
       throw new Error("Required data is missing");
     }
-    if (!email) {
-      throw new Error("Wrong credentials for user");
-    }
-    const orderStatus = await userModel.getOrderForEmail(email, orderId);
-
-    if (!orderStatus) {
-      throw new Error("Order status hasn't been retrieved");
-    }
-    res.json({ userOk: true, orderOk: orderStatus });
+    const email = req.decodedToken;
+    await userModel.getOrderForEmail(email, orderId);
+    res.sendStatus(200);
   } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
+    return res.status(403).json({ error: error.message });
   }
 };
 
@@ -194,6 +187,36 @@ const getUsersOrderHistory = async (req, res) => {
   }
 };
 
+const addNewAddress = async (req, res) => {
+  try {
+    const { userId, address } = req.body;
+
+    if (!userId || !address) {
+      throw new Error("Missing required data");
+    }
+
+    await userModel.addNewAddressSQL(userId, address);
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+const getUserAddress = async (req, res) => {
+  try {
+    const userId = req.query.userId;
+
+    if (!userId) {
+      throw new Error("Missing required data");
+    }
+
+    const address = await userModel.getUserAddresses(userId);
+    res.json(address);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -206,4 +229,7 @@ module.exports = {
   getUsersWishList,
   resetUserPasswordMsg,
   getUsersOrderHistory,
+  addNewAddress,
+  getUserAddress,
+  authOrderAccess,
 };
