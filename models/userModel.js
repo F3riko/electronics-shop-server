@@ -35,6 +35,10 @@ WHERE u.email = ? AND o.id = ? AND o.status = "CR";
 const addNewAddressQuery =
   "INSERT INTO addresses (name, surname, email, phone, zip, city, street, address, additional_info, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 const getUserAddressesQuery = "SELECT * FROM addresses WHERE user_id = ?";
+const deleteUserAddressQuery = `
+DELETE FROM addresses 
+WHERE id = ? AND user_id = ?;
+`;
 
 const userExists = async (email) => {
   try {
@@ -247,6 +251,20 @@ const getUserAddresses = async (userId) => {
   }
 };
 
+const deleteUserAddressSQL = async (userId, addressId) => {
+  try {
+    const result = await query(deleteUserAddressQuery, [addressId, userId]);
+
+    if (result.affectedRows === 1) {
+      return true;
+    } else {
+      throw new Error("Error deleting address");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getUser,
   resetMsg,
@@ -261,4 +279,5 @@ module.exports = {
   getUserOrderHistorySQL,
   addNewAddressSQL,
   getUserAddresses,
+  deleteUserAddressSQL,
 };

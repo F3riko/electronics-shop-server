@@ -217,6 +217,23 @@ const getUserAddress = async (req, res) => {
   }
 };
 
+const deleteUserAddresss = async (req, res) => {
+  try {
+    const { userId, addressId } = req.query;
+    console.log(userId, addressId);
+
+    if (!userId || !addressId) {
+      throw new Error("Missing required data");
+    }
+
+    await userModel.deleteUserAddressSQL(userId, addressId);
+    res.sendStatus(200);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -232,4 +249,5 @@ module.exports = {
   addNewAddress,
   getUserAddress,
   authOrderAccess,
+  deleteUserAddresss,
 };
