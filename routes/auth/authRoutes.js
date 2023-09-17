@@ -13,7 +13,8 @@ const {
   getUsersOrderHistory,
   addNewAddress,
   getUserAddress,
-  authOrderAccess
+  authOrderAccess,
+  deleteUserAddresss,
 } = require("../../controllers/userController");
 const {
   verifyTokenAndSession,
@@ -23,15 +24,15 @@ const {
 router.get("/logout", logOutUser);
 router.post("/register", registerUser);
 router.post("/passReset", resetUserPassword);
-router.post("/passResetToken", resetUserPasswordMsg)
+router.post("/passResetToken", resetUserPasswordMsg);
 router.post("/login", loginUser);
 router.get("/profile", verifyTokenAndSession, getUserProfile);
 router.post("/wishlist", verifyTokenAndSession, manageUserWishlist);
 router.get("/wishlist", verifyTokenAndSession, getUsersWishList);
 router.get("/order-gistory", verifyTokenAndSession, getUsersOrderHistory);
-router.post("/address", verifyTokenAndSession, addNewAddress)
-router.get("/address", verifyTokenAndSession, getUserAddress)
-
+router.post("/address", verifyTokenAndSession, addNewAddress);
+router.get("/address", verifyTokenAndSession, getUserAddress);
+router.delete("/address", verifyTokenAndSession, deleteUserAddresss);
 
 // middleware routes
 router.get("/order", verifyTokenAndSession, authOrderAccess);

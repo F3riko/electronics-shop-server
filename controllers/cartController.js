@@ -45,7 +45,6 @@ const getCart = async (req, res) => {
 
 const addCartItem = async (req, res) => {
   try {
-    console.log("session in add function", req.session);
     const productId = req.query.id;
     if (!productId) {
       throw new Error("No product id was provided");
