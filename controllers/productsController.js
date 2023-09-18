@@ -5,6 +5,7 @@ const {
   getMinMaxPricesByCategory,
   getSelectedProductsByIdSQL,
   getProductsSQL,
+  getProductReviewsSQL,
 } = require("../models/productsModel");
 const path = require("path");
 
@@ -84,7 +85,21 @@ const getSelectedProductsById = async (req, res) => {
   }
 };
 
+const getProductReviews = async (req, res) => {
+  try {
+    const productId = req.query.id;
+    if (!productId) {
+      throw new Error("Missing product ID");
+    }
+    const reviews = await getProductReviewsSQL(productId);
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
 module.exports = {
+  getProductReviews,
   getPricesRange,
   getProductById,
   getProductImgById,

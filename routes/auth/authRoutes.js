@@ -15,6 +15,8 @@ const {
   getUserAddress,
   authOrderAccess,
   deleteUserAddresss,
+  verifyReviewRight,
+  createReview,
 } = require("../../controllers/userController");
 const {
   verifyTokenAndSession,
@@ -33,6 +35,8 @@ router.get("/order-gistory", verifyTokenAndSession, getUsersOrderHistory);
 router.post("/address", verifyTokenAndSession, addNewAddress);
 router.get("/address", verifyTokenAndSession, getUserAddress);
 router.delete("/address", verifyTokenAndSession, deleteUserAddresss);
+router.get("/review", verifyTokenAndSession, verifyReviewRight);
+router.post("/review", verifyTokenAndSession, createReview)
 
 // middleware routes
 router.get("/order", verifyTokenAndSession, authOrderAccess);

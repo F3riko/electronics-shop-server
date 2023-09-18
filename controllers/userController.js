@@ -25,7 +25,7 @@ const registerUser = async (req, res) => {
     }
     await userModel.getUser(email, password, res);
   } catch (error) {
-    return res.status(500).json({ error: "An error occurred" });
+    return res.status(500).json(error.message);
   }
 };
 
@@ -220,21 +220,49 @@ const getUserAddress = async (req, res) => {
 const deleteUserAddresss = async (req, res) => {
   try {
     const { userId, addressId } = req.query;
-    console.log(userId, addressId);
-
     if (!userId || !addressId) {
       throw new Error("Missing required data");
     }
-
     await userModel.deleteUserAddressSQL(userId, addressId);
     res.sendStatus(200);
   } catch (error) {
-    console.log(error);
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+const verifyReviewRight = async (req, res) => {
+  try {
+    const { userId, productId } = req.query;
+
+    if (!userId || !productId) {
+      throw new Error("Missing required data");
+    }
+
+    await userModel.verifyReviewRightSQL(userId, productId);
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+const createReview = async (req, res) => {
+  try {
+    const { userId, productId, reviewData, userName } = req.body;
+
+    if (!userId || !reviewData) {
+      throw new Error("Missing required data");
+    }
+
+    await userModel.createReviewSQL(userId, productId, userName, reviewData);
+    res.sendStatus(200);
+  } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
 };
 
 module.exports = {
+  createReview,
+  verifyReviewRight,
   registerUser,
   loginUser,
   logOutUser,

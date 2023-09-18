@@ -8,6 +8,11 @@ const cache = new NodeCache();
 const getCategoriesQuery = "SELECT * FROM categories";
 const getMinMaxPricesByCategoryQueryQuery =
   "SELECT * FROM items WHERE id IN (?)";
+const getProductReviewsQuery = `
+  SELECT *
+  FROM reviews
+  WHERE item_id = ? AND verified = 1;
+`;
 
 (async () => {
   const categories = await query(getCategoriesQuery);
@@ -128,6 +133,15 @@ const getProductsSQL = async (params) => {
   }
 };
 
+const getProductReviewsSQL = async (productId) => {
+  try {
+    const result = await query(getProductReviewsQuery, [productId]);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getSelectedProductsByIdSQL,
   getMinMaxPricesByCategory,
@@ -135,4 +149,5 @@ module.exports = {
   getImgByProductId,
   getCategoriesList,
   getProductsSQL,
+  getProductReviewsSQL,
 };
