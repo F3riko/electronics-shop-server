@@ -7,6 +7,7 @@ const {
   getPricesRange,
   getSelectedProductsById,
   getProducts,
+  getProductReviews,
 } = require("../../controllers/productsController");
 
 // root - products
@@ -15,6 +16,7 @@ router.get("/categories", getCategories);
 router.get("/product", getProductById);
 router.post("/selected", getSelectedProductsById);
 router.get("/price-range", getPricesRange);
+router.get("/reviews", getProductReviews)
 router.get("/", getProducts);
 
 module.exports = router;

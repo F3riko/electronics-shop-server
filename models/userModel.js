@@ -39,6 +39,21 @@ const deleteUserAddressQuery = `
 DELETE FROM addresses 
 WHERE id = ? AND user_id = ?;
 `;
+const verifyReviewRightQuery = `
+      SELECT CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM orders o
+          INNER JOIN orders_items oi ON o.id = oi.order_id
+          WHERE o.user_id = ? AND oi.item_id = ?
+        ) AND NOT EXISTS (
+          SELECT 1
+          FROM reviews r
+          WHERE r.user_id = ? AND r.item_id = ?
+        ) THEN 1
+        ELSE 0
+      END AS can_post_review;
+    `;
 
 const userExists = async (email) => {
   try {
@@ -265,7 +280,59 @@ const deleteUserAddressSQL = async (userId, addressId) => {
   }
 };
 
+const verifyReviewRightSQL = async (userId, productId) => {
+  try {
+    const result = await query(verifyReviewRightQuery, [
+      userId,
+      productId,
+      userId,
+      productId,
+    ]);
+
+    if (result.length > 0 && result[0].can_post_review === 1) {
+      return true;
+    } else {
+      throw new Error("User can't post review");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const createReviewSQL = async (userId, productId, userName, reviewData) => {
+  try {
+    const hasReviewRight = await verifyReviewRightSQL(userId, productId);
+    if (hasReviewRight) {
+      const { liked, not_liked, comment, rating } = reviewData;
+      const createReviewQuery = `
+        INSERT INTO reviews (user_id, item_id, created_at, verified, rating, liked, not_liked, comment, name)
+        VALUES (?, ?, NOW(), 1, ?, ?, ?, ?, ?);
+      `;
+      const result = await query(createReviewQuery, [
+        userId,
+        productId,
+        rating || null,
+        liked || null,
+        not_liked || null,
+        comment || null,
+        userName || null,
+      ]);
+      if (result.affectedRows === 1) {
+        return true;
+      } else {
+        throw new Error("Error inserting review");
+      }
+    } else {
+      throw new Error("User does not have the right to post a review.");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
+  createReviewSQL,
+  verifyReviewRightSQL,
   getUser,
   resetMsg,
   resetPassword,
