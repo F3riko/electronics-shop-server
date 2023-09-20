@@ -8,15 +8,17 @@ const {
   getSelectedProductsById,
   getProducts,
   getProductReviews,
+  getSpecs,
 } = require("../../controllers/productsController");
 
 // root - products
 router.get("/img", getProductImgById);
 router.get("/categories", getCategories);
+router.get("/specs", getSpecs);
 router.get("/product", getProductById);
 router.post("/selected", getSelectedProductsById);
 router.get("/price-range", getPricesRange);
-router.get("/reviews", getProductReviews)
+router.get("/reviews", getProductReviews);
 router.get("/", getProducts);
 
 module.exports = router;

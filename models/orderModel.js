@@ -138,18 +138,15 @@ const processOrderPaymentSQL = async (
         user_id = ${userId};
     `;
 
-    console.log(queryText)
 
     const result = await query(queryText);
     const affectedRows = result.affectedRows;
-    console.log(affectedRows)
     if (affectedRows === 1) {
       return;
     } else {
       throw new Error("Order payment processing error SQL");
     }
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };

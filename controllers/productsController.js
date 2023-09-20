@@ -6,6 +6,7 @@ const {
   getSelectedProductsByIdSQL,
   getProductsSQL,
   getProductReviewsSQL,
+  getSpecsObjSQL,
 } = require("../models/productsModel");
 const path = require("path");
 
@@ -98,6 +99,19 @@ const getProductReviews = async (req, res) => {
   }
 };
 
+const getSpecs = async (req, res) => {
+  try {
+    const categoryId = req.query.category;
+    if (!categoryId) {
+      throw new Error("Missing product ID");
+    }
+    const specsObject = await getSpecsObjSQL(categoryId);
+    res.json(specsObject);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
 module.exports = {
   getProductReviews,
   getPricesRange,
@@ -106,4 +120,5 @@ module.exports = {
   getCategories,
   getSelectedProductsById,
   getProducts,
+  getSpecs,
 };
