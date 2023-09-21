@@ -29,10 +29,18 @@ const getAllowedSpecsParamsQuery = "SELECT title FROM properties;";
 
 const getProductData = async (id) => {
   try {
-    const results = await query("SELECT * FROM items WHERE id = ?", id);
+    const selectProductQuery = "SELECT * FROM items WHERE id = ?";
+    selectProductPropertiesQuery = `SELECT items_properties.property_value, properties.title
+    FROM items_properties
+    JOIN properties ON items_properties.property_id = properties.id
+    WHERE items_properties.item_id = ?;
+    `;
 
+    const results = await query(selectProductQuery, id);
+    const resultsProperties = await query(selectProductPropertiesQuery, id);
+    const objectData = { ...results[0], properties: resultsProperties };
     if (results.length > 0) {
-      return results[0];
+      return objectData;
     } else {
       throw new Error("No resulst were retrieved");
     }
